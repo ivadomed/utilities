@@ -23,20 +23,20 @@ Some possible options of how the datalists can be created:
 
 Some usage examples:
 1. Single Session Single Contrast:
-    python bids_to_msd_dataset_conversion.py --path_data /path/to/bids/dataset
-      --path_out /path/to/output/directory --split 0.6 0.2 0.2 --label_suffix _lesion-manual --include_contrasts T2w
+    python bids_to_msd_dataset_conversion.py --path-data /path/to/bids/dataset
+      --path-out /path/to/output/directory --split 0.6 0.2 0.2 --label-suffix _lesion-manual --include-contrasts T2w
 
 2. Single Session Multi-Contrast:
     Assuming 5 contrasts are available (T1w, T2w, FLAIR, PD, T2star) only choose FLAIR and T2w:
-    python bids_to_msd_dataset_conversion.py --path_data /path/to/bids/dataset
-        --path_out /path/to/output/directory --split 0.6 0.2 0.2 --include_contrasts FLAIR T2w --group_by_contrasts 
-        --label_suffix _seg-lesion0 --common_label_contrast FLAIR
+    python bids_to_msd_dataset_conversion.py --path-data /path/to/bids/dataset
+        --path-out /path/to/output/directory --split 0.6 0.2 0.2 --include-contrasts FLAIR T2w --group-by-contrasts 
+        --label-suffix _seg-lesion0 --common-label-contrast FLAIR
 
 3. Multi-Session Single Contrast:
     Assuming 3 sessions are available (ses-01, ses-02, ses-03) only choose ses-01 and ses-03 and with sagittal images
-    python bids_to_msd_dataset_conversion.py --path_data /path/to/bids/dataset
-        --path_out /path/to/output/directory --split 0.6 0.2 0.2 --include_sessions ses-01 ses-03 --include_contrasts acq-sag_T2w
-        --group_by_sessions
+    python bids_to_msd_dataset_conversion.py --path-data /path/to/bids/dataset
+        --path-out /path/to/output/directory --split 0.6 0.2 0.2 --include-sessions ses-01 ses-03 --include-contrasts acq-sag_T2w
+        --group-by-sessions
 """
 
 # TODO: 
@@ -67,8 +67,7 @@ parser.add_argument('--split', nargs='+', required=True, type=float, default=[0.
                         help='Ratios of training, validation and test splits lying between 0-1. Example: --split 0.6 0.2 0.2')
 # argument for getting the label suffix
 parser.add_argument('--label-suffix', default='_lesion-manual', type=str, required=True,
-                        help='Suffix for the label files. This is not required only when --group_by_contrasts is set. '
-                        'Else it is required.')
+                        help='Suffix for the label files.')
 # argument that asks to group by sessions or not
 parser.add_argument('--group-by-sessions', action='store_true',
                         help='Group images by sessions')
@@ -76,15 +75,15 @@ parser.add_argument('--group-by-contrasts', action='store_true',
                         help='Group images by contrasts')
 parser.add_argument('--common-label-contrast', default='', type=str, required=False, 
                     help='Common contrast (in proper BIDS suffix) whose label will be picked for all the other contrasts (assuming co-registered). '
-                            'Used only when --group_by_contrasts is set')
+                            'Used only when --group-by-contrasts is set')
 # argument that accepts a list of sessions to include in the dataset
 parser.add_argument('--include-sessions', nargs='+', required=False, type=str, default=None,
                         help='Sessions (in proper BIDS suffixes) to include in the dataset. Note that only these sessions will be picked to create the dataset. '
-                        'If not used then all sessions will be included. Example: --include_sessions ses-01 ses-02')
+                        'If not used then all sessions will be included. Example: --include-sessions ses-01 ses-02')
 # argument that accepts a list of contrasts to include in the dataset
 parser.add_argument('--include-contrasts', nargs='+', required=False, type=str, default=None,
                         help='Contrasts (in proper BIDS suffixes) to include in the dataset. Note that only these sessions will be picked to create the dataset. '
-                        'If not used then all contrasts will be included. Example: --contrasts T1w T2w')
+                        'If not used then all contrasts will be included. Example: --include-contrasts T1w T2w')
 
 args = parser.parse_args()
 
