@@ -39,9 +39,11 @@ def fetch_subject_info(filename_path):
     session = re.search('ses-(.*?)[_/]', filename_path)
     sessionID = session.group(0)[:-1] if session else ""    # [:-1] removes the last underscore or slash
 
-    # search for acq- suffix in filename
-    contrast_suffix = re.search('acq-(.*?)[./]', filename_path)
-    if not contrast_suffix:
+    if sessionID:
+        # contrast comes are after sessionID in the bids-structured filename
+        contrast_suffix = re.search(f"(?<={sessionID}_)(.*)(?=nii.gz)", filename_path)
+    else:
+        # contrast comes are after subjectID in the bids-structured filename
         contrast_suffix = re.search(f"(?<={subjectID}_)(.*)(?=nii.gz)", filename_path)
         
     contrast_suffixID = contrast_suffix.group(0)[:-1] if contrast_suffix else ""
