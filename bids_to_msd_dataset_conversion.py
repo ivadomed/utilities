@@ -1,7 +1,9 @@
 """
 Template for converting a BIDS dataset to the Medical Segmentation Decathlon format. The ideal
 use case for this template is to create a datalist JSON file, which can then be used with MONAI's 
-`load_decathlon_datalist` function to create a PyTorch Dataset.
+`load_decathlon_datalist` function to create a PyTorch Dataset. Note that this template does NOT
+restructure the existing BIDS dataset, but only creates a datalist JSON file, that points to the 
+images and labels in the respective BIDS folders. 
 
 Currently supports both single session (cross-sectional) and multi-session (longitudinal) BIDS datasets.
 
@@ -56,39 +58,39 @@ import glob
 parser = argparse.ArgumentParser(description='Code for creating datalists according to the MSD format.')
 
 parser.add_argument('--seed', default=42, type=int, help="Seed for reproducibility")
-parser.add_argument('--path_data', default='./', required=True, type=str, 
+parser.add_argument('--path-data', default='./', required=True, type=str, 
                         help='Absolute path to the data set directory')
-parser.add_argument('--path_out', default='./', required=True, type=str,
-                        help='Absolute path to the output directory where the datalist json will be saved')
+parser.add_argument('--path-out', default='./', required=True, type=str,
+                        help='Absolute path to the output directory where the datalist JSON will be saved.')
 # argument that accepts a list of floats as train val test splits
 parser.add_argument('--split', nargs='+', required=True, type=float, default=[0.6, 0.2, 0.2],
                         help='Ratios of training, validation and test splits lying between 0-1. Example: --split 0.6 0.2 0.2')
 # argument for getting the label suffix
-parser.add_argument('--label_suffix', default='_lesion-manual', type=str, required=True,
+parser.add_argument('--label-suffix', default='_lesion-manual', type=str, required=True,
                         help='Suffix for the label files. This is not required only when --group_by_contrasts is set. '
                         'Else it is required.')
 # argument that asks to group by sessions or not
-parser.add_argument('--group_by_sessions', action='store_true',
+parser.add_argument('--group-by-sessions', action='store_true',
                         help='Group images by sessions')
-parser.add_argument('--group_by_contrasts', action='store_true',
+parser.add_argument('--group-by-contrasts', action='store_true',
                         help='Group images by contrasts')
-parser.add_argument('--common_label_contrast', default='', type=str, required=False, 
+parser.add_argument('--common-label-contrast', default='', type=str, required=False, 
                     help='Common contrast (in proper BIDS suffix) whose label will be picked for all the other contrasts (assuming co-registered). '
                             'Used only when --group_by_contrasts is set')
 # argument that accepts a list of sessions to include in the dataset
-parser.add_argument('--include_sessions', nargs='+', required=False, type=str, default=None,
+parser.add_argument('--include-sessions', nargs='+', required=False, type=str, default=None,
                         help='Sessions (in proper BIDS suffixes) to include in the dataset. Note that only these sessions will be picked to create the dataset. '
                         'If not used then all sessions will be included. Example: --include_sessions ses-01 ses-02')
 # argument that accepts a list of contrasts to include in the dataset
-parser.add_argument('--include_contrasts', nargs='+', required=False, type=str, default=None,
+parser.add_argument('--include-contrasts', nargs='+', required=False, type=str, default=None,
                         help='Contrasts (in proper BIDS suffixes) to include in the dataset. Note that only these sessions will be picked to create the dataset. '
                         'If not used then all contrasts will be included. Example: --contrasts T1w T2w')
 
 args = parser.parse_args()
 
 root = args.path_data
-output_dir = args.path_out
 train_ratio, val_ratio, test_ratio = args.split
+PATH_DERIVATIVES = os.path.join(root, 'derivatives', 'labels')
 
 # set the random number generator seed
 rng = np.random.default_rng(args.seed)
@@ -116,13 +118,13 @@ params = {}
 params["description"] = "My awesome task"       # TODO: Add the name of the data
 params["labels"] = {
     "0": "background",
-    "1": "sc-lesion"        # TODO: Define the classes to be be segmented
+    "1": "lesion/tumour/sc"        # TODO: Define the classes to be be segmented
     }
 params["license"] = "xxx"
 params["modality"] = {
     "0": "MRI"
     }
-params["name"] = "sci-zurich"       # TODO: Add the name of the dataset
+params["name"] = "dataset-name"       # TODO: Add the name of the dataset
 params["reference"] = "N/A"
 params["tensorImageSize"] = "3D"
 
@@ -137,7 +139,7 @@ subjects_dict = {
 for name, subs_list in subjects_dict.items():
 
     temp_list = []
-    for subject_no, subject in enumerate(tqdm(subs_list, desc='Loading Volumes')):
+    for subject_no, subject in enumerate(tqdm(subs_list, desc=f"Loading {name} volumes")):
 
         # recursively get all the files for the subject
         files = sorted(glob.glob(os.path.join(args.path_data, subject) + "/**/*.nii.gz", recursive=True))
@@ -164,7 +166,7 @@ for name, subs_list in subjects_dict.items():
                         image_file = os.path.join(root, subjectID, datatype, filename)
 
                         if contrast_suffixID == args.common_label_contrast:
-                            label_file = os.path.join(root, 'derivatives', 'labels', subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
+                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
 
                         # # TODO: check if there are missing contrasts
 
@@ -172,7 +174,7 @@ for name, subs_list in subjects_dict.items():
                         # assuming all contrasts have to be included
                         image_file = os.path.join(root, subjectID, datatype, filename)
                         if contrast_suffixID == args.common_label_contrast:
-                            label_file = os.path.join(root, 'derivatives', 'labels', subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
+                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
 
                     else:
                         print(f"Skipping contrasts {contrast_suffixID} for subject {subjectID} because not included")
@@ -194,12 +196,12 @@ for name, subs_list in subjects_dict.items():
                     # check if only the specified contrasts have to be included
                     if args.include_contrasts is not None and contrast_suffixID in args.include_contrasts:
                         image_file = os.path.join(root, subjectID, datatype, filename)
-                        label_file = os.path.join(root, 'derivatives', 'labels', subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
+                        label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
 
                     elif args.include_contrasts is None:
                         # assuming all contrasts have to be included
                         image_file = os.path.join(root, subjectID, datatype, filename)
-                        label_file = os.path.join(root, 'derivatives', 'labels', subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
+                        label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
                     
                     else:
                         print(f"Skipping contrasts {contrast_suffixID} for subject {subjectID} because not included")
@@ -207,7 +209,7 @@ for name, subs_list in subjects_dict.items():
 
                     # store in a temp dictionary
                     temp_data[f"image"] = os.path.join(root, subjectID, datatype, filename)
-                    temp_data[f"label"] = os.path.join(root, 'derivatives', 'labels', subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
+                    temp_data[f"label"] = os.path.join(PATH_DERIVATIVES, subjectID, datatype, utils.add_suffix(filename, args.label_suffix))
                     temp_list.append(temp_data)
 
             else: 
@@ -227,13 +229,13 @@ for name, subs_list in subjects_dict.items():
                         # check if only the specific sessions have to be included
                         if args.include_sessions is not None and sessionID in args.include_sessions and contrast_suffixID in args.include_contrasts:
                             image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
-                            label_file = os.path.join(root, 'derivatives', 'labels', subjectID, sessionID, datatype, 
+                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype, 
                                                       utils.add_suffix(filename, args.label_suffix))
 
                         elif args.include_sessions is None and contrast_suffixID in args.include_contrasts:
                             # assuming all sessions have to be included
                             image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
-                            label_file = os.path.join(root, 'derivatives', 'labels', subjectID, sessionID, datatype,
+                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
 
                         else:
@@ -254,14 +256,12 @@ for name, subs_list in subjects_dict.items():
                     # check if only the specific sessions have to be included
                     if args.include_sessions is not None and sessionID in args.include_sessions and contrast_suffixID in args.include_contrasts:
                         image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
-                        label_file = os.path.join(root, 'derivatives', 'labels', subjectID, sessionID, datatype, 
-                                                    utils.add_suffix(filename, args.label_suffix))
+                        label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype, utils.add_suffix(filename, args.label_suffix))
 
                     elif args.include_sessions is None and contrast_suffixID in args.include_contrasts:
                         # assuming all sessions have to be included
                         image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
-                        label_file = os.path.join(root, 'derivatives', 'labels', subjectID, sessionID, datatype,
-                                                    utils.add_suffix(filename, args.label_suffix))
+                        label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype, utils.add_suffix(filename, args.label_suffix))
                     else:
                         # if a session or contrast is not included, skip it
                         continue
@@ -283,6 +283,10 @@ for name, subs_list in subjects_dict.items():
 params["numTraining"] = len(params["training"])
 params["numValidation"] = len(params["validation"])
 params["numTest"] = len(params["test"])
+
+# check if output directory exists, if not create it
+if not os.path.exists(args.path_out):
+    os.makedirs(args.path_out)
 
 final_json = json.dumps(params, indent=4, sort_keys=True)
 jsonFile = open(os.path.join(args.path_out, f"dataset.json"), "w")
