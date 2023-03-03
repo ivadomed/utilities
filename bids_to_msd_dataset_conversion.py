@@ -1,9 +1,9 @@
 """
-Template for converting a BIDS dataset to the Medical Segementation Decathlon format. The ideal 
+Template for converting a BIDS dataset to the Medical Segmentation Decathlon format. The ideal
 use case for this template is to create a datalist JSON file, which can then be used with MONAI's 
 `load_decathlon_datalist` function to create a PyTorch Dataset.
 
-Currently supports both single session (cross-sectional) and multo-session (longitudinal) BIDS datasets.
+Currently supports both single session (cross-sectional) and multi-session (longitudinal) BIDS datasets.
 
 Some possible options of how the datalists can be created:
 1. Single Session Single Contrast: Picks a single contrast and its corresponding GT label for each subject
@@ -12,7 +12,7 @@ Some possible options of how the datalists can be created:
     (i) Treat the contrasts independently to create separate (image, label) pairs for each contrast, OR,
     (ii) Group by contrasts and create a single (image, label) entity for each subject.
     NOTE: Currently assumes that all contrasts are co-registered hence only one GT label for all 
-    the contrats is used. 
+    the contrasts is used.
 3. Multi-Session Single Contrast: From all sessions or a list of specified sessions, the corresponding (image, label) 
     pairs for a "single" contrast are picked. Two options are provided: 
     (i) Treat the sessions independently to create separate (image, label) pairs for each session, OR,
