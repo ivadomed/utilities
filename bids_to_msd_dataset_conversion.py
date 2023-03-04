@@ -43,17 +43,18 @@ Some usage examples:
 # - Add support for multi-session multi-contrast
 # - Check if the (image, label) pairs exist before adding them to the datalist
 
-import os
-import json
-import pandas as pd
-from tqdm import tqdm
-import numpy as np
 import argparse
-import nibabel as nib
+import glob
+import json
+import os
+
+import numpy as np
+import pandas as pd
 from loguru import logger
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+
 import utils_dataset_conversion as utils
-import glob
 
 parser = argparse.ArgumentParser(description='Code for creating datalists according to the MSD format.')
 
