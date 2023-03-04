@@ -288,6 +288,7 @@ if not os.path.exists(args.path_out):
     os.makedirs(args.path_out)
 
 final_json = json.dumps(params, indent=4, sort_keys=True)
-jsonFile = open(os.path.join(args.path_out, f"dataset.json"), "w")
+jsonFile = open(os.path.join(args.path_out, "dataset.json"), "w")
 jsonFile.write(final_json)
 jsonFile.close()
+print(f"{os.path.join(args.path_out, 'dataset.json')} file created successfully!")
