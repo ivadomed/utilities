@@ -26,6 +26,14 @@ Some usage examples:
     python bids_to_msd_dataset_conversion.py --path-data /path/to/bids/dataset
       --path-out /path/to/output/directory --split 0.6 0.2 0.2 --label-suffix _lesion-manual --include-contrasts T2w
 
+    Sample of the dataset.json output file:
+    ```
+    {
+        "image": "sub-001/ses-01/anat/sub-001_ses-01_T2w.nii.gz",
+        "label": "derivatives/labels/sub-001/anat/sub-001_ses-01_T2w_lesion-manual.nii.gz"
+    }
+    ```
+
 2. Single Session Multi-Contrast:
     Assuming 5 contrasts are available (T1w, T2w, FLAIR, PD, T2star) only choose FLAIR and T2w:
     python bids_to_msd_dataset_conversion.py --path-data /path/to/bids/dataset
