@@ -1,9 +1,9 @@
 """
-Template for converting a BIDS dataset to the Medical Segmentation Decathlon format. The ideal
-use case for this template is to create a datalist JSON file, which can then be used with MONAI's 
-`load_decathlon_datalist` function to create a PyTorch Dataset. Note that this template does NOT
-restructure the existing BIDS dataset, but only creates a datalist JSON file, that points to the 
-images and labels in the respective BIDS folders. 
+Read a BIDS-structured dataset and create a JSON file that defines a train/validation/test split compatible with the 
+Medical Segmentation Decathlon (MSD) format. The ideal use case for this function is to create a datalist JSON file, 
+which can then be used with MONAI's `load_decathlon_datalist` function to create a PyTorch Dataset. Note that this 
+function does NOT restructure the existing BIDS dataset, but only creates a datalist JSON file that points to the 
+images and labels in the respective BIDS-structured folders. 
 
 Currently supports both single session (cross-sectional) and multi-session (longitudinal) BIDS datasets.
 
