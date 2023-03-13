@@ -6,8 +6,8 @@
 # This is a NOT a do-it-all script. It is expected that the user will modify the script to specify the contrast
 # suffixes and the label file names. The placeholders for user inputs are marked with "TODO" in the comments.
 #  
-# Usage: python convert_ivadomed_splits_nnunet.py --path_data /path/to/bids/dataset --path_out /path/to/output/directory
-#                --taskname tSCIZurichLesions --tasknumber 502 --split_dict /path/to/ivadomed-split/dictionary
+# Usage: python convert_ivadomed_splits_nnunet.py --path-data /path/to/bids/dataset --path-out /path/to/output/directory
+#                --taskname tSCIZurichLesions --tasknumber 502 --split-dict /path/to/ivadomed-split/dictionary
 # 
 # Format of the split dictionary:
 # {
@@ -65,14 +65,15 @@ def binarize_label(subject_path, label_path):
 
 
 # parse command line arguments
-parser = argparse.ArgumentParser(description='Convert BIDS-structured database to nn-unet format.')
-parser.add_argument('--path_data', help='Path to BIDS structured dataset. Accepts both cross-sectional and longitudinal datasets', required=True)
-parser.add_argument('--path_out', help='Path to output directory.', required=True)
+parser = argparse.ArgumentParser(description='Convert BIDS-structured database to nnUNet format.')
+parser.add_argument('--path-data', required=True,
+                    help='Path to BIDS structured dataset. Accepts both cross-sectional and longitudinal datasets')
+parser.add_argument('--path-out', help='Path to output directory.', required=True)
 parser.add_argument('--taskname', default='MSSpineLesion', type=str,
                     help='Specify the task name - usually the anatomy to be segmented, e.g. Hippocampus',)
 parser.add_argument('--tasknumber', default=501,type=int, 
                     help='Specify the task number, has to be greater than 500 but less than 999. e.g 502')
-parser.add_argument('--split_dict', help='Specify the splits using ivadomed dict, expecting a json file.', required=True)
+parser.add_argument('--split-dict', help='Specify the splits using ivadomed dict, expecting a json file.', required=True)
 parser.add_argument('--multichannel', action='store_true', help='To use a multi-channel model. Contrasts will be concatenated along the channel dimension.')
 
 args = parser.parse_args()
