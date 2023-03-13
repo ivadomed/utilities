@@ -58,10 +58,31 @@ Some usage examples:
         --path-out /path/to/output/directory --split 0.6 0.2 0.2 --include-sessions ses-01 ses-03 --include-contrasts
         acq-sag_T2w --group-by-sessions
 
-(New!) If multiple sessions/contrasts are to be paired with a common label, then use the following command:
+3.1 If multiple sessions/contrasts are to be paired with a common label, then use the following command:
     python bids_to_msd_dataset_conversion.py --path-data /path/to/bids/dataset
         --path-out /path/to/output/directory --split 0.6 0.2 0.2 --include-sessions ses-01 ses-03 --include-contrasts
         T2w FLAIR PD --common-label-contrast FLAIR
+
+4. (New!) Single Session Multi-Contrast (grouped by contrasts):
+    Assuming 5 contrasts are available (T1w, T2w, FLAIR, PD, T2star) only choose FLAIR and T2w and group them for each subject:
+    python bids_to_msd_dataset_conversion.py --path-data /path/to/bids/dataset
+        --path-out /path/to/output/directory --split 0.6 0.2 0.2 --label-suffix _seg-manual0
+        --include-contrasts FLAIR T2w --common-label-contrast FLAIR --group-by-contrasts
+
+    Sample of the dataset.json output file:
+    ```
+    {
+        "image_0000": "sub-001/ses-01/anat/sub-001_ses-01_FLAIR.nii.gz",
+        "image_0001": "sub-001/ses-01/anat/sub-001_ses-01_T2w.nii.gz",
+        "label_0000": "derivatives/labels/sub-001/anat/sub-001_ses-01_FLAIR_seg-manual0.nii.gz"
+    },
+    {
+        "image_0000": "sub-002/ses-01/anat/sub-002_ses-01_FLAIR.nii.gz",
+        "image_0001": "sub-002/ses-01/anat/sub-002_ses-01_T2w.nii.gz",
+        "label_0000": "derivatives/labels/sub-002/anat/sub-002_ses-01_FLAIR_seg-manual0.nii.gz"
+    },
+    ```
+
 """
 
 # TODO: 
@@ -310,44 +331,96 @@ for name, subs_list in subjects_dict.items():
                         session_ctr += 1
 
                 else:
-                    # print("Found that --group_by_sessions is NOT set. Using all sessions to create independent image and label files ...")
-                    temp_data = {}
+                    # print("Found that --group_by_sessions is NOT set. Continuing to check if grouping by contrasts is set...")
+                    
+                    # adds the possibility to group by contrasts even if a single session is present
+                    if args.group_by_contrasts:
+                        # print("Found that --group_by_contrasts is set. Moving on to check for common label suffix....")
 
-                    # check if only the specific sessions have to be included
-                    if args.include_sessions is not None and sessionID in args.include_sessions and contrast_suffixID in args.include_contrasts:
-                        image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
+                        # check if args.common_label is specified. If not, raise an error
+                        error_msg = "Please specify the common label contrast using the --common_label_contrast " \
+                                    "argument. This will be used to pair all the contrasts with the same label file."
+                        assert args.common_label_contrast != '', error_msg
 
-                        # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
-                        if args.common_label_contrast != '':
-                            filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
-                                                  utils.add_suffix(filename, args.label_suffix))
+                        # check if only the specified contrasts have to be included
+                        if args.include_contrasts is not None and contrast_suffixID in args.include_contrasts:
+                            image_file = os.path.join(root, subjectID, datatype, filename)
+
+                            # since grouping by contrasts, pick the common label that's specified                            
+                            if args.common_label_contrast != '':
+                                filename = filename.replace(contrast_suffixID, args.common_label_contrast)
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+                            else:
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+
+                            # # TODO: check if there are missing contrasts
+
+                        elif args.include_contrasts is None:
+                            # assuming all contrasts have to be included
+                            image_file = os.path.join(root, subjectID, datatype, filename)
+                            
+                            # since grouping by contrasts, pick the common label that's specified
+                            if args.common_label_contrast != '':
+                                filename = filename.replace(contrast_suffixID, args.common_label_contrast)
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+                            else:
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+
                         else:
-                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
-                                                  utils.add_suffix(filename, args.label_suffix))
+                            print(f"Skipping contrasts {contrast_suffixID} for subject {subjectID} because not included")
+                            continue
 
-                    elif args.include_sessions is None and contrast_suffixID in args.include_contrasts:
-                        # assuming all sessions have to be included
-                        image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
+                        # Similar to nnUNet's naming convention, each contrast will be stored as image_0000, image_0001,
+                        # etc. Since the label is common for all the contrasts, it will be stored as label_0000
+                        temp_data[f"image_000{contrast_ctr}"] = image_file
+                        temp_data[f"label_0000"] = label_file
 
-                        # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
-                        if args.common_label_contrast != '':
-                            filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
-                                                  utils.add_suffix(filename, args.label_suffix))
-                        else:
-                            label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
-                                                  utils.add_suffix(filename, args.label_suffix))
+                        # increment the contrast counter
+                        contrast_ctr += 1
 
                     else:
-                        # if a session or contrast is not included, skip it
-                        continue
+                        # print("Found that --group_by_sessions is NOT set. Using all sessions to create independent image and label files ...")
+                        temp_data = {}
 
-                    # store in a temp dictionary
-                    temp_data[f"image"] = image_file
-                    # NOTE: Currently only works for single contrast (because label for that will be available)
-                    temp_data[f"label"] = label_file
-                    temp_list.append(temp_data)
+                        # check if only the specific sessions have to be included
+                        if args.include_sessions is not None and sessionID in args.include_sessions and contrast_suffixID in args.include_contrasts:
+                            image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
+
+                            # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
+                            if args.common_label_contrast != '':
+                                filename = filename.replace(contrast_suffixID, args.common_label_contrast)
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+                            else:
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+
+                        elif args.include_sessions is None and contrast_suffixID in args.include_contrasts:
+                            # assuming all sessions have to be included
+                            image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
+
+                            # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
+                            if args.common_label_contrast != '':
+                                filename = filename.replace(contrast_suffixID, args.common_label_contrast)
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+                            else:
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                                        utils.add_suffix(filename, args.label_suffix))
+
+                        else:
+                            # if a session or contrast is not included, skip it
+                            continue
+
+                        # store in a temp dictionary
+                        temp_data[f"image"] = image_file
+                        # NOTE: Currently only works for single contrast (because label for that will be available)
+                        temp_data[f"label"] = label_file
+                        temp_list.append(temp_data)
 
         # only append the temp_list if grouping by sessions is set
         temp_list.append(temp_data) if args.group_by_sessions or args.group_by_contrasts else None
