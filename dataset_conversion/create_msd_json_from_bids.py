@@ -87,7 +87,6 @@ Some usage examples:
 
 # TODO: 
 # - Add support for multi-session multi-contrast
-# - Check if the (image, label) pairs exist before adding them to the datalist
 
 import argparse
 import glob
@@ -232,6 +231,11 @@ for name, subs_list in subjects_dict.items():
                         print(f"Skipping contrasts {contrast_suffixID} for subject {subjectID} because not included")
                         continue
 
+                    # check whether both the image and label files exist
+                    if not os.path.exists(image_file) or not os.path.exists(label_file):
+                        raise FileNotFoundError(f"\nImage file: {image_file}, OR, "
+                                                    f"\nLabel file: {label_file} does not exist. Please check the paths.")
+
                     # Similar to nnUNet's naming convention, each contrast will be stored as image_0000, image_0001,
                     # etc. Since the label is common for all the contrasts, it will be stored as label_0000
                     temp_data[f"image_000{contrast_ctr}"] = image_file
@@ -272,6 +276,11 @@ for name, subs_list in subjects_dict.items():
                     else:
                         print(f"Skipping contrasts {contrast_suffixID} for subject {subjectID} because not included")
                         continue
+
+                    # check whether both the image and label files exist
+                    if not os.path.exists(image_file) or not os.path.exists(label_file):
+                        raise FileNotFoundError(f"\nImage file: {image_file}, OR, "
+                                                    f"\nLabel file: {label_file} does not exist. Please check the paths.")
 
                     # store in a temp dictionary
                     temp_data[f"image"] = image_file
@@ -322,6 +331,11 @@ for name, subs_list in subjects_dict.items():
                             # if a session or contrast is not included, skip it
                             continue
 
+                        # check whether both the image and label files exist
+                        if not os.path.exists(image_file) or not os.path.exists(label_file):
+                            raise FileNotFoundError(f"\nImage file: {image_file}, OR, "
+                                                        f"\nLabel file: {label_file} does not exist. Please check the paths.")
+
                         # each session will be stored as image_01, image_01, etc. and label_01, label_02, etc.
                         temp_data[f"image_0{session_ctr + 1}"] = image_file
                         temp_data[f"label_0{session_ctr + 1}"] = label_file
@@ -354,8 +368,6 @@ for name, subs_list in subjects_dict.items():
                                 label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
 
-                            # # TODO: check if there are missing contrasts
-
                         elif args.include_contrasts is None:
                             # assuming all contrasts have to be included
                             image_file = os.path.join(root, subjectID, datatype, filename)
@@ -372,6 +384,11 @@ for name, subs_list in subjects_dict.items():
                         else:
                             print(f"Skipping contrasts {contrast_suffixID} for subject {subjectID} because not included")
                             continue
+
+                        # check whether both the image and label files exist
+                        if not os.path.exists(image_file) or not os.path.exists(label_file):
+                            raise FileNotFoundError(f"\nImage file: {image_file}, OR, "
+                                                    f"\nLabel file: {label_file} does not exist. Please check the paths.")
 
                         # Similar to nnUNet's naming convention, each contrast will be stored as image_0000, image_0001,
                         # etc. Since the label is common for all the contrasts, it will be stored as label_0000
@@ -414,6 +431,11 @@ for name, subs_list in subjects_dict.items():
                         else:
                             # if a session or contrast is not included, skip it
                             continue
+
+                        # check whether both the image and label files exist
+                        if not os.path.exists(image_file) or not os.path.exists(label_file):
+                            raise FileNotFoundError(f"\nImage file: {image_file}, OR, "
+                                                        f"\nLabel file: {label_file} does not exist. Please check the paths.")
 
                         # store in a temp dictionary
                         temp_data[f"image"] = image_file
