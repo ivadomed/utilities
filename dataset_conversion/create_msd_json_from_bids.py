@@ -30,7 +30,7 @@ Some usage examples:
     ```
     {
         "image": "sub-001/ses-01/anat/sub-001_ses-01_T2w.nii.gz",
-        "label": "derivatives/labels/sub-001/anat/sub-001_ses-01_T2w_lesion-manual.nii.gz"
+        "label": "derivatives/labels/sub-001/ses-01/anat/sub-001_ses-01_T2w_lesion-manual.nii.gz"
     }
     ```
 
@@ -44,11 +44,11 @@ Some usage examples:
     ```
     {
         "image": "sub-001/ses-01/anat/sub-001_ses-01_FLAIR.nii.gz",
-        "label": "derivatives/labels/sub-001/anat/sub-001_ses-01_FLAIR_lesion-manual.nii.gz"
+        "label": "derivatives/labels/sub-001/ses-01/anat/sub-001_ses-01_FLAIR_lesion-manual.nii.gz"
     },
     {
         "image": "sub-001/ses-01/anat/sub-001_ses-01_T2w.nii.gz",
-        "label": "derivatives/labels/sub-001/anat/sub-001_ses-01_FLAIR_lesion-manual.nii.gz"
+        "label": "derivatives/labels/sub-001/ses-01/anat/sub-001_ses-01_FLAIR_lesion-manual.nii.gz"
     },
     ```
 
@@ -74,12 +74,12 @@ Some usage examples:
     {
         "image_0000": "sub-001/ses-01/anat/sub-001_ses-01_FLAIR.nii.gz",
         "image_0001": "sub-001/ses-01/anat/sub-001_ses-01_T2w.nii.gz",
-        "label_0000": "derivatives/labels/sub-001/anat/sub-001_ses-01_FLAIR_seg-manual0.nii.gz"
+        "label_0000": "derivatives/labels/sub-001/ses-01/anat/sub-001_ses-01_FLAIR_seg-manual0.nii.gz"
     },
     {
         "image_0000": "sub-002/ses-01/anat/sub-002_ses-01_FLAIR.nii.gz",
         "image_0001": "sub-002/ses-01/anat/sub-002_ses-01_T2w.nii.gz",
-        "label_0000": "derivatives/labels/sub-002/anat/sub-002_ses-01_FLAIR_seg-manual0.nii.gz"
+        "label_0000": "derivatives/labels/sub-002/ses-01/anat/sub-002_ses-01_FLAIR_seg-manual0.nii.gz"
     },
     ```
 
@@ -299,10 +299,10 @@ for name, subs_list in subjects_dict.items():
                             # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
                             if args.common_label_contrast != '':
                                 filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                     utils.add_suffix(filename, args.label_suffix))
                             else:
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                     utils.add_suffix(filename, args.label_suffix))
 
 
@@ -312,10 +312,10 @@ for name, subs_list in subjects_dict.items():
                             # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
                             if args.common_label_contrast != '':
                                 filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                     utils.add_suffix(filename, args.label_suffix))
                             else:
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                     utils.add_suffix(filename, args.label_suffix))
 
                         else:
@@ -343,15 +343,15 @@ for name, subs_list in subjects_dict.items():
 
                         # check if only the specified contrasts have to be included
                         if args.include_contrasts is not None and contrast_suffixID in args.include_contrasts:
-                            image_file = os.path.join(root, subjectID, datatype, filename)
+                            image_file = os.path.join(root, subjectID, sessionID, datatype, filename)
 
-                            # since grouping by contrasts, pick the common label that's specified                            
+                            # since grouping by contrasts, pick the common label that's specified                   
                             if args.common_label_contrast != '':
                                 filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
                             else:
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
 
                             # # TODO: check if there are missing contrasts
@@ -363,10 +363,10 @@ for name, subs_list in subjects_dict.items():
                             # since grouping by contrasts, pick the common label that's specified
                             if args.common_label_contrast != '':
                                 filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
                             else:
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
 
                         else:
@@ -392,10 +392,10 @@ for name, subs_list in subjects_dict.items():
                             # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
                             if args.common_label_contrast != '':
                                 filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
                             else:
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
 
                         elif args.include_sessions is None and contrast_suffixID in args.include_contrasts:
@@ -405,10 +405,10 @@ for name, subs_list in subjects_dict.items():
                             # if common label is specified, only pick the label file for that contrast, else pick the label file for all contrasts
                             if args.common_label_contrast != '':
                                 filename = filename.replace(contrast_suffixID, args.common_label_contrast)
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
                             else:
-                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, datatype,
+                                label_file = os.path.join(PATH_DERIVATIVES, subjectID, sessionID, datatype,
                                                         utils.add_suffix(filename, args.label_suffix))
 
                         else:
