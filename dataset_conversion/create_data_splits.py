@@ -1,5 +1,5 @@
 """
-Creates train/validation/test splits for a given dataset and saves the output in JSON file. 
+Creates train/validation/test splits for a given BIDS-structured dataset and saves the output in JSON file. 
 The JSON file can be used to convert the dataset into nnUNet format using the script convert_bids_to_nnunet.py
 
 Usage: 
@@ -24,7 +24,9 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import utils_dataset_conversion as utils
 
-parser = argparse.ArgumentParser(description='Code for creating data splits.')
+parser = argparse.ArgumentParser(description="Creates train/validation/test splits for a given BIDS dataset and saves "
+                                 "the output in a JSON file. This JSON file can be used to convert the dataset into nnUNet "
+                                 "format using the script convert_bids_to_nnunet.py")
 
 parser.add_argument('--seed', default=42, type=int, help="Seed for reproducibility")
 parser.add_argument('--path-data', default='./', required=True, type=str,
