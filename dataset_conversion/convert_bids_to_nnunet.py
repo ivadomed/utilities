@@ -1,12 +1,15 @@
 #!/usr/bin/env python 
 # 
-# This script specifically converts a BIDS dataset split into train/val/test according to ivadomed
-# to the MSD dataset format for nnUNet.
-# Ideal use case: Compare the performance of ivadomed and nnUNet models on same splits of the dataset. 
+# This script specifically converts a BIDS dataset split into train/val/test to the MSD dataset format for 
+# training with nnUNet.
+# The dataset split can be obtained in two ways: (1) from `split_dict.json` in ivadomed (see NOTE below), or, 
+# (2) by creating a new split by running the `create_data_splits.py` file.
+# This split will be used for creating the train and test folders for nnUNet. 
+# 
 # This is a NOT a do-it-all script. It is expected that the user will modify the script to specify the contrast
 # suffixes and the label file names. The placeholders for user inputs are marked with "TODO" in the comments.
 #  
-# Usage: python convert_ivadomed_splits_nnunet.py --path-data /path/to/bids/dataset --path-out /path/to/output/directory
+# Usage: python convert_bids_to_nnunet.py --path-data /path/to/bids/dataset --path-out /path/to/output/directory
 #                --taskname tSCIZurichLesions --tasknumber 502 --split-dict /path/to/ivadomed-split/dictionary
 # 
 # Format of the split dictionary:
@@ -316,5 +319,3 @@ if __name__ == '__main__':
     dataset_dict_name = f"dataset.json"
     with open(os.path.join(path_out, dataset_dict_name), "w") as outfile:
         outfile.write(json_object)
-
-
