@@ -1,5 +1,15 @@
 """
 Creates train/validation/test splits for a given dataset and saves the output in JSON file. 
+The JSON file can be used to convert the dataset into nnUNet format using the script convert_bids_to_nnunet.py
+
+Usage: 
+1. If you want to include specific sessions and contrasts:
+python create_data_splits.py --path-data <path-to-bids-dataset> --path-out <path-to-output-dir> --split 0.6 0.2 0.2 --include-sessions ses-01 ses-02 --include-contrasts T1w T2w
+
+2. If you want to include all sessions for a specific contrast: (do not specify the --include-sessions argument)
+python create_data_splits.py --path-data <path-to-bids-dataset> --path-out <path-to-output-dir> --split 0.6 0.2 0.2 --include-contrasts T1w T2w
+
+Author: Naga Karthik
 """
 
 import argparse
