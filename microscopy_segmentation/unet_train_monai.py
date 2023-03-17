@@ -12,6 +12,8 @@ import tempfile
 from glob import glob
 from pathlib import Path
 
+from tqdm import tqdm
+
 import torch
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
@@ -111,10 +113,12 @@ val_data = monai.data.Dataset(data=val_files, transform=val_transforms)
 # (which is often the case for microscopy data)
 patch_iterator = monai.data.PatchIterd(keys=["im", "seg-ax", "seg-my"], patch_size=(256, 256), mode='constant')
 bs = 4
+# need num_worker=0 in dataloader for GPU
+nw = 0
 
 # some checks
 check_ds = monai.data.GridPatchDataset(data=train_data, patch_iter=patch_iterator)
-check_loader = DataLoader(check_ds, batch_size=bs, num_workers=2, collate_fn=list_data_collate)
+check_loader = DataLoader(check_ds, batch_size=bs, num_workers=nw, collate_fn=list_data_collate)
 check_data = monai.utils.misc.first(check_loader)
 print(check_data[0]["im"].shape, check_data[0]["seg-ax"].shape, check_data[0]["seg-my"].shape)
 loader_size = sum(1 for _ in check_loader)
@@ -123,14 +127,17 @@ print(f"Size of the training loader: {loader_size}")
 
 # training data loader
 train_ds = monai.data.GridPatchDataset(data=train_data, patch_iter=patch_iterator)
-train_loader = DataLoader(train_ds, batch_size=bs, num_workers=2, collate_fn=list_data_collate)
+train_loader = DataLoader(train_ds, batch_size=bs, num_workers=nw, collate_fn=list_data_collate)
 
 # validation data loader
 val_ds = monai.data.GridPatchDataset(data=val_data, patch_iter=patch_iterator)
-val_loader = DataLoader(val_ds, batch_size=bs, num_workers=2, collate_fn=list_data_collate)
+val_loader = DataLoader(val_ds, batch_size=bs, num_workers=nw, collate_fn=list_data_collate)
 
-dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False)
-post_trans = Compose([Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
+# not 100% sure about include_background=False
+dice_metric = DiceMetric(include_background=False, reduction="mean", get_not_nans=False)
+#TODO: check if softmax=true is appropriate
+post_pred = Compose([AsDiscrete(threshold=0.5)])
+post_label = Compose([AsDiscrete()])
 
 # define UNet
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -151,11 +158,11 @@ model = monai.networks.nets.UNet(
 # original config: 150 epochs but stopped at epoch 117 due to early stopping
 num_epochs = 117
 # TODO: HMM... MAYBE REMOVE SIGMOID FROM THE LOSS? DOESN'T SEEM TO BE APPLIED IN IVADOMED
-loss_function = monai.losses.DiceLoss(sigmoid=False)
+loss_function = monai.losses.DiceLoss(include_background=False, softmax=True)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=5e-3)
 # original config used CosineAnnealingLR; for more information on how to use it with 
 # monai, see https://github.com/Project-MONAI/tutorials/blob/main/modules/learning_rate.ipynb
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=num_epochs)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=150, eta_min=1e-9)
 
 # training loop
 val_interval = 1
@@ -170,26 +177,29 @@ for epoch in range(num_epochs):
     model.train()
     epoch_loss = 0
     iteration = 0
-    for batch_data in train_loader:
-        iteration += 1
-        inputs = batch_data[0]["im"].to(device)
-        print(inputs.shape)
-        mask_ax, mask_my = batch_data[0]["seg-ax"].to(device), batch_data[0]["seg-my"].to(device)
-        # merge axon and myelin masks into a single label tensor of size (bs, 2, 256, 256)
-        labels = torch.cat([mask_ax, mask_my], dim=1)
 
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = loss_function(outputs, labels)
-        loss.backward()
+    with tqdm(total=loader_size) as pbar:
+        for batch_data in train_loader:
+            iteration += 1
+            inputs = batch_data[0]["im"].to(device)
+            mask_ax, mask_my = batch_data[0]["seg-ax"].to(device), batch_data[0]["seg-my"].to(device)
+            # merge axon and myelin masks into a single label tensor of size (bs, 2, 256, 256)
+            labels = torch.cat([mask_ax, mask_my], dim=1)
 
-        optimizer.step()
-        epoch_loss += loss.item()
-        # print(f"\t{iteration}/{loader_size}: train loss: {loss.item():.4f}")
-        writer.add_scalar("train_loss", loss.item(), loader_size * epoch + iteration)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = loss_function(outputs, labels)
+            loss.backward()
+
+            optimizer.step()
+            epoch_loss += loss.item()
+            # print(f"\t{iteration}/{loader_size}: train loss: {loss.item():.4f}")
+            writer.add_scalar("train_loss", loss.item(), loader_size * epoch + iteration)
+            pbar.update(1)
 
     # CosineAnnealingLR scheduler should be stepped at every epoch
     scheduler.step()
+    writer.add_scalar("learning_rate", scheduler.get_last_lr()[-1], epoch+1)
     epoch_loss /= iteration
     epoch_loss_values.append(epoch_loss)
     print(f"Epoch {epoch+1} average loss: {epoch_loss:.4f}")
@@ -208,7 +218,8 @@ for epoch in range(num_epochs):
                 roi_size = (256, 256)
                 sw_batch_size = 4
                 val_outputs = sliding_window_inference(val_images, roi_size, sw_batch_size, model)
-                val_outputs = [post_trans(i) for i in decollate_batch(val_outputs)]
+                val_outputs = [post_pred(i) for i in decollate_batch(val_outputs)]
+                val_labels = [post_label(i) for i in decollate_batch(val_labels)]
                 dice_metric(y_pred=val_outputs, y=val_labels)
             metric = dice_metric.aggregate().item()
             # reset the status for next validation round
@@ -226,12 +237,14 @@ for epoch in range(num_epochs):
                 )
             )
             writer.add_scalar("val_mean_dice", metric, epoch+1)
+            print(val_labels[0][0].shape)
+            print(val_outputs[0][0].shape)
             plot_2d_or_3d_image(val_images, epoch+1, writer, index=0, tag="image")
-            plot_2d_or_3d_image(val_labels[:,0,:,:], epoch+1, writer, index=0, tag="label-ax")
-            plot_2d_or_3d_image(val_labels[:,1,:,:], epoch+1, writer, index=0, tag="label-my")
-            # TODO: HMM... MAYBE THIS BELOW IS WRONG; HOW ARE OUTPUT DIMENSIONS ARANGED?
-            plot_2d_or_3d_image(val_outputs[:][0], epoch+1, writer, index=0, tag="pred-ax")
-            plot_2d_or_3d_image(val_outputs[:][1], epoch+1, writer, index=0, tag="pred-my")
+            plot_2d_or_3d_image([val_labels[0][0]], epoch+1, writer, index=0, tag="label-ax")
+            plot_2d_or_3d_image([val_labels[0][1]], epoch+1, writer, index=0, tag="label-my")
+            # TODO: HMM... MAYBE THIS BELOW IS WRONG; HOW ARE OUTPUT DIMENSIONS ARRANGED? (B,C,H,W)?
+            plot_2d_or_3d_image([val_outputs[0][0]], epoch+1, writer, index=0, tag="pred-ax")
+            plot_2d_or_3d_image([val_outputs[0][1]], epoch+1, writer, index=0, tag="pred-my")
     
 print(f"Training complete. Best metric: {best_metric:.4f} at epoch {best_metric_epoch}")
 writer.close()
