@@ -27,6 +27,7 @@ from monai.transforms import (
     Activations,
     EnsureChannelFirstd,
     AsDiscrete,
+    AsDiscreted,
     Compose,
     LoadImaged,
     RandAffined,
@@ -77,30 +78,34 @@ train_transforms = Compose(
         NormalizeIntensityd(keys="im"),
         # affine and elastic transforms: adapted from ADS default-SEM-model
         # see https://github.com/axondeepseg/default-SEM-model
-        # RandAffined(
-            # keys=["im", "seg-ax", "seg-my"], 
-            # prob=1.0, 
-            # rotate_range=np.pi/64, 
-            # scale_range=0.05,
-            # translate_range=(10, 10),
-            # padding_mode="zeros",
-            # device=device
-        # ),
-        # Rand2DElasticd(
-            # keys=["im", "seg-ax", "seg-my"],
-            # prob=0.5,
-            # spacing=(30, 30),
-            # magnitude_range=(1, 2),
-            # padding_mode="zeros",
-            # device=device,
-        # ),
+        RandAffined(
+            keys=["im", "seg-ax", "seg-my"], 
+            prob=1.0, 
+            rotate_range=np.pi/64, 
+            scale_range=0.05,
+            translate_range=(10, 10),
+            padding_mode="zeros",
+            mode=("bilinear", "nearest", "nearest"),
+            device=device
+        ),
+        Rand2DElasticd(
+            keys=["im", "seg-ax", "seg-my"],
+            prob=0.5,
+            spacing=(30, 30),
+            magnitude_range=(1, 2),
+            padding_mode="zeros",
+            mode=("bilinear", "nearest", "nearest"),
+            device=device,
+        ),
+        AsDiscreted(keys=["seg-ax", "seg-my"], threshold=127)
     ]
 )
 val_transforms = Compose(
     [
         LoadImaged(keys=["im", "seg-ax", "seg-my"]),
         EnsureChannelFirstd(keys=["im", "seg-ax", "seg-my"]),
-        NormalizeIntensityd(keys="im")
+        NormalizeIntensityd(keys="im"),
+        AsDiscreted(keys=["seg-ax", "seg-my"], threshold=127)
     ]
 )
 
@@ -133,8 +138,6 @@ train_loader = DataLoader(train_ds, batch_size=bs, num_workers=nw, collate_fn=li
 val_ds = monai.data.GridPatchDataset(data=val_data, patch_iter=patch_iterator)
 val_loader = DataLoader(val_ds, batch_size=bs, num_workers=nw, collate_fn=list_data_collate)
 
-# not 100% sure about include_background=False
-dice_metric = DiceMetric(include_background=False, reduction="mean", get_not_nans=False)
 #TODO: check if softmax=true is appropriate
 post_pred = Compose([Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
 post_label = Compose([AsDiscrete()])
@@ -158,6 +161,8 @@ model = monai.networks.nets.UNet(
 # original config: 150 epochs but stopped at epoch 117 due to early stopping
 num_epochs = 117
 # TODO: HMM... MAYBE REMOVE SIGMOID FROM THE LOSS? DOESN'T SEEM TO BE APPLIED IN IVADOMED
+# not 100% sure about include_background=False
+dice_metric = DiceMetric(include_background=False, get_not_nans=False, reduction="none")
 loss_function = monai.losses.DiceLoss(include_background=False, sigmoid=True)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=5e-3)
 # original config used CosineAnnealingLR; for more information on how to use it with 
