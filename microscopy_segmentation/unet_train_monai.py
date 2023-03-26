@@ -77,23 +77,23 @@ train_transforms = Compose(
         NormalizeIntensityd(keys="im"),
         # affine and elastic transforms: adapted from ADS default-SEM-model
         # see https://github.com/axondeepseg/default-SEM-model
-        RandAffined(
-            keys=["im", "seg-ax", "seg-my"], 
-            prob=1.0, 
-            rotate_range=np.pi/64, 
-            scale_range=0.05,
-            translate_range=(10, 10),
-            padding_mode="zeros",
-            device=device
-        ),
-        Rand2DElasticd(
-            keys=["im", "seg-ax", "seg-my"],
-            prob=0.5,
-            spacing=(30, 30),
-            magnitude_range=(1, 2),
-            padding_mode="zeros",
-            device=device,
-        ),
+        # RandAffined(
+            # keys=["im", "seg-ax", "seg-my"], 
+            # prob=1.0, 
+            # rotate_range=np.pi/64, 
+            # scale_range=0.05,
+            # translate_range=(10, 10),
+            # padding_mode="zeros",
+            # device=device
+        # ),
+        # Rand2DElasticd(
+            # keys=["im", "seg-ax", "seg-my"],
+            # prob=0.5,
+            # spacing=(30, 30),
+            # magnitude_range=(1, 2),
+            # padding_mode="zeros",
+            # device=device,
+        # ),
     ]
 )
 val_transforms = Compose(
@@ -136,7 +136,7 @@ val_loader = DataLoader(val_ds, batch_size=bs, num_workers=nw, collate_fn=list_d
 # not 100% sure about include_background=False
 dice_metric = DiceMetric(include_background=False, reduction="mean", get_not_nans=False)
 #TODO: check if softmax=true is appropriate
-post_pred = Compose([AsDiscrete(threshold=0.5)])
+post_pred = Compose([Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
 post_label = Compose([AsDiscrete()])
 
 # define UNet
@@ -144,7 +144,7 @@ device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = monai.networks.nets.UNet(
     spatial_dims=2,
     in_channels=1,
-    out_channels=2,
+    out_channels=2,      # NOTE: in her thesis, Marie-Helene mentions out_channels=3
     channels=(64, 128, 256, 512),
     strides=(1, 1, 1),
     act="ReLU",
@@ -158,7 +158,7 @@ model = monai.networks.nets.UNet(
 # original config: 150 epochs but stopped at epoch 117 due to early stopping
 num_epochs = 117
 # TODO: HMM... MAYBE REMOVE SIGMOID FROM THE LOSS? DOESN'T SEEM TO BE APPLIED IN IVADOMED
-loss_function = monai.losses.DiceLoss(include_background=False, softmax=True)
+loss_function = monai.losses.DiceLoss(include_background=False, sigmoid=True)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=5e-3)
 # original config used CosineAnnealingLR; for more information on how to use it with 
 # monai, see https://github.com/Project-MONAI/tutorials/blob/main/modules/learning_rate.ipynb
@@ -181,13 +181,23 @@ for epoch in range(num_epochs):
     with tqdm(total=loader_size) as pbar:
         for batch_data in train_loader:
             iteration += 1
+            global_it = loader_size * epoch + iteration
+
             inputs = batch_data[0]["im"].to(device)
             mask_ax, mask_my = batch_data[0]["seg-ax"].to(device), batch_data[0]["seg-my"].to(device)
             # merge axon and myelin masks into a single label tensor of size (bs, 2, 256, 256)
-            labels = torch.cat([mask_ax, mask_my], dim=1)
+            labels = torch.cat((mask_ax, mask_my), dim=1)
+            plot_2d_or_3d_image(inputs, global_it, writer, index=0, tag="TRAIN-image")
+            plot_2d_or_3d_image([labels[0][0]], global_it, writer, index=0, tag="TRAIN-label-ax")
+            plot_2d_or_3d_image([labels[0][1]], global_it, writer, index=0, tag="TRAIN-label-my")
 
             optimizer.zero_grad()
             outputs = model(inputs)
+            plot_2d_or_3d_image([outputs[0][0]], global_it, writer, index=0, tag="TRAIN-pred-ax")
+            plot_2d_or_3d_image([outputs[0][1]], global_it, writer, index=0, tag="TRAIN-pred-my")
+            # note: in ivadomed, a final activation function is applied at the end of the UNet decoder
+            # see https://github.com/ivadomed/ivadomed/blob/e101ebea632683d67deab3c50dd6b372207de2a9/ivadomed/models.py#L462
+            # this is not the case with the default monai UNet but the sigmoid is applied inside the loss function
             loss = loss_function(outputs, labels)
             loss.backward()
 
@@ -236,9 +246,8 @@ for epoch in range(num_epochs):
                     epoch + 1, metric, best_metric, best_metric_epoch
                 )
             )
+
             writer.add_scalar("val_mean_dice", metric, epoch+1)
-            print(val_labels[0][0].shape)
-            print(val_outputs[0][0].shape)
             plot_2d_or_3d_image(val_images, epoch+1, writer, index=0, tag="image")
             plot_2d_or_3d_image([val_labels[0][0]], epoch+1, writer, index=0, tag="label-ax")
             plot_2d_or_3d_image([val_labels[0][1]], epoch+1, writer, index=0, tag="label-my")
