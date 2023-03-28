@@ -8,7 +8,6 @@ for ADS: https://github.com/axondeepseg/default-SEM-model/blob/main/model_seg_ra
 import logging
 import json
 import sys
-import tempfile
 from glob import glob
 from pathlib import Path
 
@@ -161,9 +160,8 @@ model = monai.networks.nets.UNet(
 # original config: 150 epochs but stopped at epoch 117 due to early stopping
 num_epochs = 117
 # TODO: HMM... MAYBE REMOVE SIGMOID FROM THE LOSS? DOESN'T SEEM TO BE APPLIED IN IVADOMED
-# not 100% sure about include_background=False
-dice_metric = DiceMetric(include_background=False, get_not_nans=False, reduction="none")
-loss_function = monai.losses.DiceLoss(include_background=False, sigmoid=True)
+dice_metric = DiceMetric(include_background=True, get_not_nans=False, reduction="mean")
+loss_function = monai.losses.DiceLoss(include_background=True, sigmoid=True)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=5e-3)
 # original config used CosineAnnealingLR; for more information on how to use it with 
 # monai, see https://github.com/Project-MONAI/tutorials/blob/main/modules/learning_rate.ipynb
@@ -198,8 +196,8 @@ for epoch in range(num_epochs):
 
             optimizer.zero_grad()
             outputs = model(inputs)
-            plot_2d_or_3d_image([outputs[0][0]], global_it, writer, index=0, tag="TRAIN-pred-ax")
-            plot_2d_or_3d_image([outputs[0][1]], global_it, writer, index=0, tag="TRAIN-pred-my")
+            plot_2d_or_3d_image([post_pred(outputs[0][0])], global_it, writer, index=0, tag="TRAIN-pred-ax")
+            plot_2d_or_3d_image([post_pred(outputs[0][1])], global_it, writer, index=0, tag="TRAIN-pred-my")
             # note: in ivadomed, a final activation function is applied at the end of the UNet decoder
             # see https://github.com/ivadomed/ivadomed/blob/e101ebea632683d67deab3c50dd6b372207de2a9/ivadomed/models.py#L462
             # this is not the case with the default monai UNet but the sigmoid is applied inside the loss function
@@ -254,11 +252,11 @@ for epoch in range(num_epochs):
 
             writer.add_scalar("val_mean_dice", metric, epoch+1)
             plot_2d_or_3d_image(val_images, epoch+1, writer, index=0, tag="image")
-            plot_2d_or_3d_image([val_labels[0][0]], epoch+1, writer, index=0, tag="label-ax")
-            plot_2d_or_3d_image([val_labels[0][1]], epoch+1, writer, index=0, tag="label-my")
+            plot_2d_or_3d_image([val_labels[0][0]], epoch+1, writer, index=0, tag="VAL-label-ax")
+            plot_2d_or_3d_image([val_labels[0][1]], epoch+1, writer, index=0, tag="VAL-label-my")
             # TODO: HMM... MAYBE THIS BELOW IS WRONG; HOW ARE OUTPUT DIMENSIONS ARRANGED? (B,C,H,W)?
-            plot_2d_or_3d_image([val_outputs[0][0]], epoch+1, writer, index=0, tag="pred-ax")
-            plot_2d_or_3d_image([val_outputs[0][1]], epoch+1, writer, index=0, tag="pred-my")
+            plot_2d_or_3d_image([post_pred(val_outputs[0][0])], epoch+1, writer, index=0, tag="VAL-pred-ax")
+            plot_2d_or_3d_image([post_pred(val_outputs[0][1])], epoch+1, writer, index=0, tag="VAL-pred-my")
     
 print(f"Training complete. Best metric: {best_metric:.4f} at epoch {best_metric_epoch}")
 writer.close()
