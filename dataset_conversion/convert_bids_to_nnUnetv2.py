@@ -74,7 +74,7 @@ def main():
 
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
     path_out = Path(os.path.join(os.path.abspath(os.path.expanduser(args.path_out)),
-                                 f'Dataset{args.dataset_number}_{args.dataset_name}'))
+                                 f'Dataset{args.dataset_number:03d}_{args.dataset_name}'))
 
     # Get filename
     contrast = args.contrast
