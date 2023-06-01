@@ -75,14 +75,11 @@ def get_parser():
     parser.add_argument('--split', nargs='+', type=float, default=[0.8, 0.2],
                         help='Ratios of training (includes validation) and test splits lying between 0-1. '
                              'Example: --split 0.8 0.2')
-    parser.add_argument('--orient', type=str,
-                        help='WIP re-orient images if used image are copied (no symlink) {LAS,LAI,LPS,LPI,LSA,LSP,LIA,LIP,RAS,RAI,RPS,RPI,RSA,RSP,RIA,RIP,ALS,ALI,ARS,ARI,ASL,ASR,AIL,AIR,PLS,PLI,PRS,PRI,PSL,PSR,PIL,PIR,SLA,SLP,SRA,SRP,SAL,SAR,SPL,SPR,ILA,ILP,IRA,IRP,IAL,IAR,IPL,IPR}')
-
     return parser
 
 
 def convert_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
-                    list_labels, is_ses, orient, session=None):
+                    list_labels, is_ses,session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
 
@@ -97,7 +94,6 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
         list_images (list): List with all the images path in the new dataset.
         list_labels (list): List with all the labels path in the new dataset.
         is_ses (bool): Is the dataset session structured.
-        orient (str): Desired orientation or None if no change.
         session (str): Session name or None if dataset without session .
 
     Returns:
@@ -128,25 +124,17 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
                                                      f"{sub_name}_{counter:03d}.nii.gz")
             list_images.append(subject_image_file_nnunet)
             list_labels.append(subject_label_file_nnunet)
-            if orient is not None:
-                # TODO reorient image when placing it in the new dataset so not possible with symlink
-                set_orient("image_path", orient)
-            else:
-                # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-                os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-                os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
+            # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
+            os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
+            os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
         else:
             print(f"Label for image {subject_image_file} does not exist this file is ignored")
     else:
         subject_image_file_nnunet = os.path.join(path_out_images,
                                                  f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
         list_images.append(subject_image_file_nnunet)
-        if orient is not None:
-            # TODO reorient image when placing it in the new dataset
-            print("NEED re orient in: ", orient)
-        else:
-            # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-            os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
+        # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
+        os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
 
     return list_images, list_labels
 
@@ -163,10 +151,6 @@ def binarize_label(subject_path, label_path):
     label_bin = nib.Nifti1Image(label_npy, ref.affine, ref.header)
     # overwrite the original label file with the binarized version
     nib.save(label_bin, label_path)
-
-
-def set_orient(image_path, orient):
-    print(f"change file:{image_path} to orientation: {orient}")
 
 
 def main():
@@ -238,7 +222,7 @@ def main():
                     train_images, train_labels = convert_subject(root, subject, contrast, label_suffix,
                                                                  path_out_imagesTr,
                                                                  path_out_labelsTr, train_ctr + test_ctr, train_images,
-                                                                 train_labels, True, orient, session)
+                                                                 train_labels, True,session)
 
 
             # No session folder(s) exist
@@ -247,7 +231,7 @@ def main():
                 train_images, train_labels = convert_subject(root, subject, contrast, label_suffix, path_out_imagesTr,
                                                              path_out_labelsTr, train_ctr + test_ctr, train_images,
                                                              train_labels,
-                                                             False, orient)
+                                                             False)
 
         # Test subjects
         elif subject in test_subjects:
@@ -264,7 +248,7 @@ def main():
                     test_images, test_labels = convert_subject(root, subject, contrast, label_suffix,
                                                                path_out_imagesTs,
                                                                path_out_labelsTs, train_ctr + test_ctr, test_images,
-                                                               test_labels, True, orient, session)
+                                                               test_labels, True, session)
 
 
             # No session folder(s) exist
@@ -273,7 +257,7 @@ def main():
                 train_images, train_labels = convert_subject(root, subject, contrast, label_suffix, path_out_imagesTs,
                                                              path_out_labelsTs, train_ctr + test_ctr, test_images,
                                                              test_labels,
-                                                             False, orient)
+                                                             False)
 
 
         else:
