@@ -74,13 +74,15 @@ def get_parser():
                         help='Ratios of training (includes validation) and test splits lying between 0-1. '
                              'Example: --split 0.8 0.2')
     parser.add_argument('--orient', type=str,
-                        help='WIP re-orient images {LAS,LAI,LPS,LPI,LSA,LSP,LIA,LIP,RAS,RAI,RPS,RPI,RSA,RSP,RIA,RIP,ALS,ALI,ARS,ARI,ASL,ASR,AIL,AIR,PLS,PLI,PRS,PRI,PSL,PSR,PIL,PIR,SLA,SLP,SRA,SRP,SAL,SAR,SPL,SPR,ILA,ILP,IRA,IRP,IAL,IAR,IPL,IPR}')
+                        help='WIP re-orient images if used image are copied (no symlink) {LAS,LAI,LPS,LPI,LSA,LSP,LIA,LIP,RAS,RAI,RPS,RPI,RSA,RSP,RIA,RIP,ALS,ALI,ARS,ARI,ASL,ASR,AIL,AIR,PLS,PLI,PRS,PRI,PSL,PSR,PIL,PIR,SLA,SLP,SRA,SRP,SAL,SAR,SPL,SPR,ILA,ILP,IRA,IRP,IAL,IAR,IPL,IPR}')
 
     return parser
+
 
 def convert_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
                     list_labels, is_ses, orient, session=None):
     if is_ses:
+        #TODO verify that using _ between subject and session is problematic or not
         subject_image_file = os.path.join(root, subject, session, 'anat',
                                           f"{subject}_{session}_{contrast}.nii.gz")
         subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
@@ -99,7 +101,7 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
             subject_image_file_nnunet = os.path.join(path_out_images,
                                                      f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
             subject_label_file_nnunet = os.path.join(path_out_labels,
-                                                 f"{sub_name}_{counter:03d}.nii.gz")
+                                                     f"{sub_name}_{counter:03d}.nii.gz")
             list_images.append(subject_image_file_nnunet)
             list_labels.append(subject_label_file_nnunet)
             if orient is not None:
@@ -109,7 +111,7 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
                 # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
                 os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
                 os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
-        else :
+        else:
             print(f"Label for image {subject_image_file} does not exist this file is ignored")
     else:
         subject_image_file_nnunet = os.path.join(path_out_images,
@@ -121,7 +123,6 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
         else:
             # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
             os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-
 
     return list_images, list_labels
 
@@ -139,8 +140,10 @@ def binarize_label(subject_path, label_path):
     # overwrite the original label file with the binarized version
     nib.save(label_bin, label_path)
 
+
 def set_orient(image_path, orient):
     print(orient)
+
 
 def main():
     parser = get_parser()
