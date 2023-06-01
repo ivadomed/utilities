@@ -29,6 +29,29 @@ import nibabel as nib
 import numpy as np
 
 
+def contrast2chanel(contrast):
+    """
+    Based on the documentation:
+    "channel_names": {
+        "0": "FLAIR",
+        "1": "T1w",
+        "2": "T2",
+        "3": "T2w"
+    }
+    """
+    channel_name = {
+        "FLAIR": 0,
+        "T1w" : 1,
+        "T2" : 2,
+        "T2w" : 3
+    }
+    if contrast in channel_name.keys():
+        return channel_name[contrast]
+    else:
+        print(f"Contrast not know using channel value 4")
+        return 4
+
+
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
@@ -140,7 +163,7 @@ def main():
                     sub_ses_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
                                    str(Path(subject_image_file).name).split('_')[1]
                     subject_image_file_nnunet = os.path.join(path_out_imagesTr,
-                                                             f"{sub_ses_name}_{train_ctr:03d}_0000.nii.gz")
+                                                             f"{sub_ses_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
                     subject_label_file_nnunet = os.path.join(path_out_labelsTr,
                                                              f"{sub_ses_name}_{train_ctr:03d}.nii.gz")
 
@@ -152,7 +175,7 @@ def main():
                     os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
 
                     # binarize the label file
-                    #binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
+                    # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
 
             # No session folder(s) exist
             # TODO: there is a lot of code duplication with the above if statement --> refactor
@@ -169,7 +192,7 @@ def main():
                 # create the new convention names for nnunet
                 sub_name = str(Path(subject_image_file).name).split('_')[0]
                 subject_image_file_nnunet = os.path.join(path_out_imagesTr,
-                                                         f"{sub_name}_{train_ctr:03d}_0000.nii.gz")
+                                                         f"{sub_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
                 subject_label_file_nnunet = os.path.join(path_out_labelsTr,
                                                          f"{sub_name}_{train_ctr:03d}.nii.gz")
 
@@ -181,7 +204,7 @@ def main():
                 os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
 
                 # binarize the label file
-                #binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
+                # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
 
         # Test subjects
         # TODO: there is a lot of code duplication with the train subjects loop --> refactor
@@ -211,7 +234,7 @@ def main():
                     sub_ses_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
                                    str(Path(subject_image_file).name).split('_')[1]
                     subject_image_file_nnunet = os.path.join(path_out_imagesTs,
-                                                             f"{sub_ses_name}_{train_ctr:03d}_0000.nii.gz")
+                                                             f"{sub_ses_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
                     subject_label_file_nnunet = os.path.join(path_out_labelsTs,
                                                              f"{sub_ses_name}_{train_ctr:03d}.nii.gz")
 
@@ -223,7 +246,7 @@ def main():
                     os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
 
                     # binarize the label file
-                    #binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
+                    # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
 
             # No session folder(s) exist
             else:
@@ -238,9 +261,8 @@ def main():
 
                 # create the new convention names for nnunet
                 sub_name = str(Path(subject_image_file).name).split('_')[0]
-                #TODO modify channel to adapt on contrast
                 subject_image_file_nnunet = os.path.join(path_out_imagesTs,
-                                                         f"{sub_name}_{train_ctr:03d}_0000.nii.gz")
+                                                         f"{sub_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
                 subject_label_file_nnunet = os.path.join(path_out_labelsTs,
                                                          f"{sub_name}_{train_ctr:03d}.nii.gz")
 
@@ -252,7 +274,7 @@ def main():
                 os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
 
                 # binarize the label file
-                #binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
+                # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
 
         else:
             print("Skipping file, could not be located in the Train or Test splits split.", subject)
@@ -279,7 +301,7 @@ def main():
     json_dict['numTest'] = test_ctr
 
     # The following keys are the most important ones.
-    #TODO adapt to config V2
+    # TODO adapt to config V2
     """
     channel_names:
         Channel names must map the index to the name of the channel. For BIDS, this refers to the contrast suffix.
