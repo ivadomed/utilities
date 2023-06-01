@@ -10,7 +10,7 @@ modified to include those as well.
 
 Usage example:
     python convert_bids_to_nnUNetv2.py --path-data ~/data/dataset --path-out ~/data/dataset-nnunet
-                    --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 0.2 --seed 99
+                    --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 --seed 99 --orient RPI
 
 Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
@@ -41,15 +41,57 @@ def contrast2chanel(contrast):
     """
     channel_name = {
         "FLAIR": 0,
-        "T1w" : 1,
-        "T2" : 2,
-        "T2w" : 3
+        "T1w": 1,
+        "T2": 2,
+        "T2w": 3
     }
     if contrast in channel_name.keys():
         return channel_name[contrast]
     else:
         print(f"Contrast not know using channel value 4")
         return 4
+
+
+def symlink_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
+                    list_labels, is_ses, orient, session=None):
+    label_exist = bool
+    if is_ses:
+        subject_image_file = os.path.join(root, subject, session, 'anat',
+                                          f"{subject}_{session}_{contrast}.nii.gz")
+        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
+                                          f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
+        label_exist = os.path.exists(subject_label_file)
+        sub_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
+                   str(Path(subject_image_file).name).split('_')[1]
+    else:
+        subject_image_file = os.path.join(root, subject, 'anat',
+                                          f"{subject}_{contrast}.nii.gz")
+        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
+                                          f"{subject}_{contrast}_{label_suffix}.nii.gz")
+        label_exist =os.path.exists(subject_label_file)
+        sub_name = str(Path(subject_image_file).name).split('_')[0]
+
+
+    if label_exist:
+        subject_image_file_nnunet = os.path.join(path_out_images,
+                                                 f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
+        subject_label_file_nnunet = os.path.join(path_out_labels,
+                                             f"{sub_name}_{counter:03d}.nii.gz")
+        list_images.append(subject_image_file_nnunet)
+        list_labels.append(subject_label_file_nnunet)
+        if orient:
+            # TODO reorient image when  placinf it in the new dataset
+            print("NEED re orient in: ", orient)
+        else:
+            # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
+            os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
+            os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
+    else :
+        print(f"Label for image {subject_image_file} does not exist this file is ignored")
+
+
+
+    return list_images, list_labels
 
 
 def get_parser():
@@ -73,6 +115,8 @@ def get_parser():
     parser.add_argument('--split', nargs='+', type=float, default=[0.8, 0.2],
                         help='Ratios of training (includes validation) and test splits lying between 0-1. '
                              'Example: --split 0.8 0.2')
+    parser.add_argument('--orient', type=str,
+                        help='WIP re-orient images {LAS,LAI,LPS,LPI,LSA,LSP,LIA,LIP,RAS,RAI,RPS,RPI,RSA,RSP,RIA,RIP,ALS,ALI,ARS,ARI,ASL,ASR,AIL,AIR,PLS,PLI,PRS,PRI,PSL,PSR,PIL,PIR,SLA,SLP,SRA,SRP,SAL,SAR,SPL,SPR,ILA,ILP,IRA,IRP,IAL,IAR,IPL,IPR}')
 
     return parser
 
@@ -90,11 +134,13 @@ def binarize_label(subject_path, label_path):
     # overwrite the original label file with the binarized version
     nib.save(label_bin, label_path)
 
+def set_orient(image_path, orient):
+    print(orient)
 
 def main():
     parser = get_parser()
     args = parser.parse_args()
-
+    orient = args.orient
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
     path_out = Path(os.path.join(os.path.abspath(os.path.expanduser(args.path_out)),
                                  f'Dataset{args.dataset_number:03d}_{args.dataset_name}'))
@@ -128,8 +174,15 @@ def main():
 
     # Get the training and test splits
     train_ratio, test_ratio = args.split[0], args.split[1]
-    train_subjects, test_subjects = train_test_split(subjects, test_size=test_ratio, random_state=args.seed)
-    rng.shuffle(train_subjects)
+    if test_ratio == 1:
+        test_subjects = subjects
+        train_subjects = []
+    elif train_ratio == 1:
+        train_subjects = subjects
+        test_subjects = []
+    else:
+        train_subjects, test_subjects = train_test_split(subjects, test_size=test_ratio, random_state=args.seed)
+        rng.shuffle(train_subjects)
 
     # Initialize counters for train and test subjects
     train_ctr, test_ctr = 0, 0
@@ -145,69 +198,24 @@ def main():
                 # Get all sessions for the subject
                 sessions = os.listdir(os.path.join(root, subject))
                 sessions.sort()
-                # Get number of sessions for the subject
-                num_sessions_per_subject = len(os.listdir(os.path.join(root, subject)))
 
                 for session in sessions:
                     train_ctr += 1
+                    train_images, train_labels = symlink_subject(root, subject, contrast, label_suffix,
+                                                                 path_out_imagesTr,
+                                                                 path_out_labelsTr, train_ctr + test_ctr, train_images,
+                                                                 train_labels, True, orient, session)
 
-                    subject_image_file = os.path.join(root, subject, session, 'anat',
-                                                      f"{subject}_{session}_{contrast}.nii.gz")
-                    subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
-                                                      f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
-
-                    # NOTE: if adding more contrasts, add them here by creating image-label files and the corresponding
-                    # nnunet convention names
-
-                    # create the new convention names for nnunet
-                    sub_ses_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
-                                   str(Path(subject_image_file).name).split('_')[1]
-                    subject_image_file_nnunet = os.path.join(path_out_imagesTr,
-                                                             f"{sub_ses_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
-                    subject_label_file_nnunet = os.path.join(path_out_labelsTr,
-                                                             f"{sub_ses_name}_{train_ctr:03d}.nii.gz")
-
-                    train_images.append(subject_image_file_nnunet)
-                    train_labels.append(subject_label_file_nnunet)
-
-                    # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-                    os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-                    os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
-
-                    # binarize the label file
-                    # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
 
             # No session folder(s) exist
-            # TODO: there is a lot of code duplication with the above if statement --> refactor
             else:
                 train_ctr += 1
-                subject_image_file = os.path.join(root, subject, 'anat',
-                                                  f"{subject}_{contrast}.nii.gz")
-                subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
-                                                  f"{subject}_{contrast}_{label_suffix}.nii.gz")
-
-                # NOTE: if adding more contrasts, add them here by creating image-label files and the corresponding
-                # nnunet convention names
-
-                # create the new convention names for nnunet
-                sub_name = str(Path(subject_image_file).name).split('_')[0]
-                subject_image_file_nnunet = os.path.join(path_out_imagesTr,
-                                                         f"{sub_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
-                subject_label_file_nnunet = os.path.join(path_out_labelsTr,
-                                                         f"{sub_name}_{train_ctr:03d}.nii.gz")
-
-                train_images.append(subject_image_file_nnunet)
-                train_labels.append(subject_label_file_nnunet)
-
-                # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-                os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-                os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
-
-                # binarize the label file
-                # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
+                train_images, train_labels = symlink_subject(root, subject, contrast, label_suffix, path_out_imagesTr,
+                                                             path_out_labelsTr, train_ctr + test_ctr, train_images,
+                                                             train_labels,
+                                                             False, orient)
 
         # Test subjects
-        # TODO: there is a lot of code duplication with the train subjects loop --> refactor
         elif subject in test_subjects:
 
             # Session folder(s) exist
@@ -216,65 +224,23 @@ def main():
                 # Get all sessions for the subject
                 sessions = os.listdir(os.path.join(root, subject))
                 sessions.sort()
-                # Get number of sessions for the subject
-                num_sessions_per_subject = len(os.listdir(os.path.join(root, subject)))
 
                 for session in sessions:
                     test_ctr += 1
+                    test_images, test_labels = symlink_subject(root, subject, contrast, label_suffix,
+                                                               path_out_imagesTs,
+                                                               path_out_labelsTs, train_ctr + test_ctr, test_images,
+                                                               test_labels, True, orient, session)
 
-                    subject_image_file = os.path.join(root, subject, session, 'anat',
-                                                      f"{subject}_{session}_{contrast}.nii.gz")
-                    subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
-                                                      f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
-
-                    # NOTE: if adding more contrasts, add them here by creating image-label files and the corresponding
-                    # nnunet convention names
-
-                    # create the new convention names for nnunet
-                    sub_ses_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
-                                   str(Path(subject_image_file).name).split('_')[1]
-                    subject_image_file_nnunet = os.path.join(path_out_imagesTs,
-                                                             f"{sub_ses_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
-                    subject_label_file_nnunet = os.path.join(path_out_labelsTs,
-                                                             f"{sub_ses_name}_{train_ctr:03d}.nii.gz")
-
-                    train_images.append(subject_image_file_nnunet)
-                    train_labels.append(subject_label_file_nnunet)
-
-                    # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-                    os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-                    os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
-
-                    # binarize the label file
-                    # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
 
             # No session folder(s) exist
             else:
                 test_ctr += 1
-                subject_image_file = os.path.join(root, subject, 'anat',
-                                                  f"{subject}_{contrast}.nii.gz")
-                subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
-                                                  f"{subject}_{contrast}_{label_suffix}.nii.gz")
+                train_images, train_labels = symlink_subject(root, subject, contrast, label_suffix, path_out_imagesTs,
+                                                             path_out_labelsTs, train_ctr + test_ctr, test_images,
+                                                             test_labels,
+                                                             False, orient)
 
-                # NOTE: if adding more contrasts, add them here by creating image-label files and the corresponding
-                # nnunet convention names
-
-                # create the new convention names for nnunet
-                sub_name = str(Path(subject_image_file).name).split('_')[0]
-                subject_image_file_nnunet = os.path.join(path_out_imagesTs,
-                                                         f"{sub_name}_{train_ctr:03d}_{contrast2chanel(contrast):04d}.nii.gz")
-                subject_label_file_nnunet = os.path.join(path_out_labelsTs,
-                                                         f"{sub_name}_{train_ctr:03d}.nii.gz")
-
-                train_images.append(subject_image_file_nnunet)
-                train_labels.append(subject_label_file_nnunet)
-
-                # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-                os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-                os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
-
-                # binarize the label file
-                # binarize_label(subject_image_file_nnunet, subject_label_file_nnunet)
 
         else:
             print("Skipping file, could not be located in the Train or Test splits split.", subject)
@@ -294,13 +260,14 @@ def main():
     json_dict = OrderedDict()
 
     # The following keys are the most important ones.
-    # TODO adapt to config V2
     """
     channel_names:
         Channel names must map the index to the name of the channel. For BIDS, this refers to the contrast suffix.
         {
-            0: 'T1',
-            1: 'CT'
+            "0": "FLAIR",
+            "1": "T1w",
+            "2": "T2",
+            "3": "T2w"
         }
     Note that the channel names may influence the normalization scheme!! Learn more in the documentation.
 
@@ -323,11 +290,11 @@ def main():
     """
 
     json_dict['channel_names'] = {  # Remove unused channels
-            "0": "FLAIR",
-            "1": "T1w",
-            "2": "T2",
-            "3": "T2w",
-            "4": "CHANGE"
+        "0": "FLAIR",
+        "1": "T1w",
+        "2": "T2",
+        "3": "T2w",
+        "4": "CHANGE"
     }
 
     json_dict['labels'] = {
@@ -335,7 +302,7 @@ def main():
         "label": 1,
     }
 
-    json_dict["numTraining"] = len(train_subjects)
+    json_dict["numTraining"] = train_ctr
     # Needed for finding the files correctly. IMPORTANT! File endings must match between images and segmentations!
     json_dict['file_ending'] = ".nii.gz"
     json_dict["overwrite_image_reader_writer"] = "SimpleITKIO"
