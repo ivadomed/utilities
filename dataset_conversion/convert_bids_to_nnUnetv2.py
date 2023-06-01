@@ -59,6 +59,7 @@ def get_parser():
                         help='Path to BIDS dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True,
                         help='Path to output directory. Example: ~/data/dataset-nnunet')
+    # TODO acept multi contrast dataset
     parser.add_argument('--contrast', required=True, type=str,
                         help='Subject contrast. Example: T2w or acq-sag_T2w')
     parser.add_argument('--label-suffix', type=str,
@@ -81,8 +82,30 @@ def get_parser():
 
 def convert_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
                     list_labels, is_ses, orient, session=None):
+    """Function to get image from original BIDS dataset modify if needed and place
+        it with a compatible name in nnUNet dataset.
+
+    Args:
+        root (str): Path to BIDS dataset directory .
+        subject (str): Subject name .
+        contrast (str): Type of contrast.
+        label_suffix (str): suffix of the label in derivatives .
+        path_out_images (str): path to the images directory in the new dataset (test or train).
+        path_out_labels (str): path to the labels directory in the new dataset (test or train).
+        counter (int): Number of subject already treated.
+        list_images (list): List with all the images path in the new dataset.
+        list_labels (list): List with all the labels path in the new dataset.
+        is_ses (bool): Is the dataset session structured.
+        orient (str): Desired orientation or None if no change.
+        session (str): Session name or None if dataset without session .
+
+    Returns:
+        list_images (list): List with all the images path in the new dataset with one new append.
+        list_labels (list): List with all the labels path in the new dataset with one new append.
+
+    """
     if is_ses:
-        #TODO verify that using _ between subject and session is problematic or not
+        # TODO verify that using _ between subject and session is problematic or not
         subject_image_file = os.path.join(root, subject, session, 'anat',
                                           f"{subject}_{session}_{contrast}.nii.gz")
         subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
@@ -106,7 +129,7 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
             list_labels.append(subject_label_file_nnunet)
             if orient is not None:
                 # TODO reorient image when placing it in the new dataset so not possible with symlink
-                print("NEED re orient in: ", orient)
+                set_orient("image_path", orient)
             else:
                 # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
                 os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
@@ -142,7 +165,7 @@ def binarize_label(subject_path, label_path):
 
 
 def set_orient(image_path, orient):
-    print(orient)
+    print(f"change file:{image_path} to orientation: {orient}")
 
 
 def main():
@@ -270,6 +293,7 @@ def main():
     json_dict = OrderedDict()
 
     # The following keys are the most important ones.
+    #TODO only add channel for the used contrast
     """
     channel_names:
         Channel names must map the index to the name of the channel. For BIDS, this refers to the contrast suffix.
