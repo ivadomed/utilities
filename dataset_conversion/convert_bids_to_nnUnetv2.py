@@ -52,48 +52,6 @@ def contrast2chanel(contrast):
         return 4
 
 
-def symlink_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
-                    list_labels, is_ses, orient, session=None):
-    label_exist = bool
-    if is_ses:
-        subject_image_file = os.path.join(root, subject, session, 'anat',
-                                          f"{subject}_{session}_{contrast}.nii.gz")
-        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
-                                          f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
-        label_exist = os.path.exists(subject_label_file)
-        sub_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
-                   str(Path(subject_image_file).name).split('_')[1]
-    else:
-        subject_image_file = os.path.join(root, subject, 'anat',
-                                          f"{subject}_{contrast}.nii.gz")
-        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
-                                          f"{subject}_{contrast}_{label_suffix}.nii.gz")
-        label_exist =os.path.exists(subject_label_file)
-        sub_name = str(Path(subject_image_file).name).split('_')[0]
-
-
-    if label_exist:
-        subject_image_file_nnunet = os.path.join(path_out_images,
-                                                 f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
-        subject_label_file_nnunet = os.path.join(path_out_labels,
-                                             f"{sub_name}_{counter:03d}.nii.gz")
-        list_images.append(subject_image_file_nnunet)
-        list_labels.append(subject_label_file_nnunet)
-        if orient:
-            # TODO reorient image when  placinf it in the new dataset
-            print("NEED re orient in: ", orient)
-        else:
-            # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-            os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-            os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
-    else :
-        print(f"Label for image {subject_image_file} does not exist this file is ignored")
-
-
-
-    return list_images, list_labels
-
-
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
@@ -103,8 +61,8 @@ def get_parser():
                         help='Path to output directory. Example: ~/data/dataset-nnunet')
     parser.add_argument('--contrast', required=True, type=str,
                         help='Subject contrast. Example: T2w or acq-sag_T2w')
-    parser.add_argument('--label-suffix', required=True, type=str,
-                        help='Label suffix. Example: lesion-manual or seg-manual')
+    parser.add_argument('--label-suffix', type=str,
+                        help='Label suffix. Example: lesion-manual or seg-manual, if None no label used')
     parser.add_argument('--dataset-name', '-dname', default='MyDataset', type=str,
                         help='Specify the task name. Example: MyDataset')
     parser.add_argument('--dataset-number', '-dnum', default=501, type=int,
@@ -119,6 +77,53 @@ def get_parser():
                         help='WIP re-orient images {LAS,LAI,LPS,LPI,LSA,LSP,LIA,LIP,RAS,RAI,RPS,RPI,RSA,RSP,RIA,RIP,ALS,ALI,ARS,ARI,ASL,ASR,AIL,AIR,PLS,PLI,PRS,PRI,PSL,PSR,PIL,PIR,SLA,SLP,SRA,SRP,SAL,SAR,SPL,SPR,ILA,ILP,IRA,IRP,IAL,IAR,IPL,IPR}')
 
     return parser
+
+def convert_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
+                    list_labels, is_ses, orient, session=None):
+    if is_ses:
+        subject_image_file = os.path.join(root, subject, session, 'anat',
+                                          f"{subject}_{session}_{contrast}.nii.gz")
+        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
+                                          f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
+        sub_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
+                   str(Path(subject_image_file).name).split('_')[1]
+    else:
+        subject_image_file = os.path.join(root, subject, 'anat',
+                                          f"{subject}_{contrast}.nii.gz")
+        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
+                                          f"{subject}_{contrast}_{label_suffix}.nii.gz")
+        sub_name = str(Path(subject_image_file).name).split('_')[0]
+
+    if label_suffix != None:
+        if os.path.exists(subject_label_file):
+            subject_image_file_nnunet = os.path.join(path_out_images,
+                                                     f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
+            subject_label_file_nnunet = os.path.join(path_out_labels,
+                                                 f"{sub_name}_{counter:03d}.nii.gz")
+            list_images.append(subject_image_file_nnunet)
+            list_labels.append(subject_label_file_nnunet)
+            if orient is not None:
+                # TODO reorient image when placing it in the new dataset so not possible with symlink
+                print("NEED re orient in: ", orient)
+            else:
+                # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
+                os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
+                os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
+        else :
+            print(f"Label for image {subject_image_file} does not exist this file is ignored")
+    else:
+        subject_image_file_nnunet = os.path.join(path_out_images,
+                                                 f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
+        list_images.append(subject_image_file_nnunet)
+        if orient is not None:
+            # TODO reorient image when placing it in the new dataset
+            print("NEED re orient in: ", orient)
+        else:
+            # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
+            os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
+
+
+    return list_images, list_labels
 
 
 def binarize_label(subject_path, label_path):
@@ -148,6 +153,8 @@ def main():
     # Get filename
     contrast = args.contrast
     label_suffix = args.label_suffix
+    if label_suffix == None:
+        print(f"No suffix label provided, ignoring label to create this dataset")
 
     # create individual directories for train and test images and labels
     path_out_imagesTr = Path(os.path.join(path_out, 'imagesTr'))
@@ -201,7 +208,7 @@ def main():
 
                 for session in sessions:
                     train_ctr += 1
-                    train_images, train_labels = symlink_subject(root, subject, contrast, label_suffix,
+                    train_images, train_labels = convert_subject(root, subject, contrast, label_suffix,
                                                                  path_out_imagesTr,
                                                                  path_out_labelsTr, train_ctr + test_ctr, train_images,
                                                                  train_labels, True, orient, session)
@@ -210,7 +217,7 @@ def main():
             # No session folder(s) exist
             else:
                 train_ctr += 1
-                train_images, train_labels = symlink_subject(root, subject, contrast, label_suffix, path_out_imagesTr,
+                train_images, train_labels = convert_subject(root, subject, contrast, label_suffix, path_out_imagesTr,
                                                              path_out_labelsTr, train_ctr + test_ctr, train_images,
                                                              train_labels,
                                                              False, orient)
@@ -227,7 +234,7 @@ def main():
 
                 for session in sessions:
                     test_ctr += 1
-                    test_images, test_labels = symlink_subject(root, subject, contrast, label_suffix,
+                    test_images, test_labels = convert_subject(root, subject, contrast, label_suffix,
                                                                path_out_imagesTs,
                                                                path_out_labelsTs, train_ctr + test_ctr, test_images,
                                                                test_labels, True, orient, session)
@@ -236,7 +243,7 @@ def main():
             # No session folder(s) exist
             else:
                 test_ctr += 1
-                train_images, train_labels = symlink_subject(root, subject, contrast, label_suffix, path_out_imagesTs,
+                train_images, train_labels = convert_subject(root, subject, contrast, label_suffix, path_out_imagesTs,
                                                              path_out_labelsTs, train_ctr + test_ctr, test_images,
                                                              test_labels,
                                                              False, orient)
