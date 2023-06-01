@@ -12,7 +12,7 @@ Usage example:
     python convert_bids_to_nnUNetv2.py --path-data ~/data/dataset --path-out ~/data/dataset-nnunet
                     --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 0.2 --seed 99
 
-Naga Karthik, Jan Valosek
+Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
 
 import argparse
@@ -238,6 +238,7 @@ def main():
 
                 # create the new convention names for nnunet
                 sub_name = str(Path(subject_image_file).name).split('_')[0]
+                #TODO modify channel to adapt on contrast
                 subject_image_file_nnunet = os.path.join(path_out_imagesTs,
                                                          f"{sub_name}_{train_ctr:03d}_0000.nii.gz")
                 subject_label_file_nnunet = os.path.join(path_out_labelsTs,
@@ -277,7 +278,8 @@ def main():
     json_dict['numTraining'] = train_ctr
     json_dict['numTest'] = test_ctr
 
-    # The following keys are the most important ones. 
+    # The following keys are the most important ones.
+    #TODO adapt to config V2
     """
     channel_names:
         Channel names must map the index to the name of the channel. For BIDS, this refers to the contrast suffix.
