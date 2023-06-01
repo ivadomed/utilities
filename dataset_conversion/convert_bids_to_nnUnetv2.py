@@ -292,13 +292,6 @@ def main():
     # example: https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunet/dataset_conversion/Task055_SegTHOR.py
 
     json_dict = OrderedDict()
-    json_dict['name'] = args.dataset_name
-    json_dict['description'] = args.dataset_name
-    json_dict['reference'] = "TBD"
-    json_dict['licence'] = "TBD"
-    json_dict['release'] = "0.0"
-    json_dict['numTraining'] = train_ctr
-    json_dict['numTest'] = test_ctr
 
     # The following keys are the most important ones.
     # TODO adapt to config V2
@@ -329,17 +322,23 @@ def main():
         Remember that nnU-Net expects consecutive values for labels! nnU-Net also expects 0 to be background!
     """
 
-    json_dict['channel_names'] = {
-        0: "acq-sag_T2w",
+    json_dict['channel_names'] = {  # Remove unused channels
+            "0": "FLAIR",
+            "1": "T1w",
+            "2": "T2",
+            "3": "T2w",
+            "4": "CHANGE"
     }
 
     json_dict['labels'] = {
         "background": 0,
-        "lesion": 1,
+        "label": 1,
     }
 
+    json_dict["numTraining"] = len(train_subjects)
     # Needed for finding the files correctly. IMPORTANT! File endings must match between images and segmentations!
     json_dict['file_ending'] = ".nii.gz"
+    json_dict["overwrite_image_reader_writer"] = "SimpleITKIO"
 
     # create dataset_description.json
     json_object = json.dumps(json_dict, indent=4)
