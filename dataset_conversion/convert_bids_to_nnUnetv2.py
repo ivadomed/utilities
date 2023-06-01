@@ -59,9 +59,10 @@ def get_parser():
                         help='Path to BIDS dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True,
                         help='Path to output directory. Example: ~/data/dataset-nnunet')
-    # TODO acept multi contrast dataset
+    # TODO accept multi contrast dataset
     parser.add_argument('--contrast', required=True, type=str,
                         help='Subject contrast. Example: T2w or acq-sag_T2w')
+    #TODO accept multi value label
     parser.add_argument('--label-suffix', type=str,
                         help='Label suffix. Example: lesion-manual or seg-manual, if None no label used')
     parser.add_argument('--dataset-name', '-dname', default='MyDataset', type=str,
