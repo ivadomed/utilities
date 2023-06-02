@@ -10,7 +10,7 @@ modified to include those as well.
 
 Usage example:
     python convert_bids_to_nnUNetv2.py --path-data ~/data/dataset --path-out ~/data/dataset-nnunet
-                    --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 --seed 99 --orient RPI
+                    --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 --seed 99
 
 Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
