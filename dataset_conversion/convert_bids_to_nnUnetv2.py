@@ -55,7 +55,7 @@ def get_parser():
     return parser
 
 
-def convert_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
+def convert_subject(root, subject,channel, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
                     list_labels, is_ses, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
@@ -78,7 +78,6 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
         list_labels (list): List with all the labels path in the new dataset with one new append.
 
     """
-    # TODO ignore file if contrast not available
     if is_ses:
         # TODO verify that using _ between subject and session is problematic or not
         subject_image_file = os.path.join(root, subject, session, 'anat',
@@ -95,30 +94,29 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
                                           f"{subject}_{contrast}_{label_suffix}.nii.gz")
         sub_name = str(Path(subject_image_file).name).split('_')[0]
 
-    if label_suffix != None:
-        if os.path.exists(subject_label_file):
-            subject_image_file_nnunet = os.path.join(path_out_images,
-                                                     f"{sub_name}_{counter:03d}_{contrast:04d}.nii.gz")
-            subject_label_file_nnunet = os.path.join(path_out_labels,
-                                                     f"{sub_name}_{counter:03d}.nii.gz")
-            list_images.append(subject_image_file_nnunet)
-            list_labels.append(subject_label_file_nnunet)
-            # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-            os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
-            os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
-        else:
-            print(f"Label for image {subject_image_file} does not exist this file is ignored")
-    else:
+    if os.path.exists(subject_image_file):
+        if label_suffix is not None:
+            if os.path.exists(subject_label_file):
+                subject_label_file_nnunet = os.path.join(path_out_labels,
+                                                         f"{sub_name}_{counter:03d}.nii.gz")
+                list_labels.append(subject_label_file_nnunet)
+                # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
+                os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
+            else:
+                print(f"Label for image {subject_image_file} does not exist this file is ignored")
         subject_image_file_nnunet = os.path.join(path_out_images,
-                                                 f"{sub_name}_{counter:03d}_{contrast:04d}.nii.gz")
+                                                     f"{sub_name}_{counter:03d}_{channel:04d}.nii.gz")
         list_images.append(subject_image_file_nnunet)
         # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
         os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
+    else:
+        print(f"contrast {contrast} for subject {sub_name} does not exist this contrast is ignored")
 
     return list_images, list_labels
 
 
 def binarize_label(subject_path, label_path):
+    # For soft seg ground truth nnUNet only accept integer
     label_npy = nib.load(label_path).get_fdata()
     # NOTE: using a very small threshold (<<< 0) to binarize the label leads to more 
     # more volume of the label being retained. For e.g. due to PVE, the voxels which have 
@@ -173,6 +171,7 @@ def main():
     logger.info(f"Total number of subjects in the dataset: {len(subjects)}")
 
     # Get the training and test splits
+
     train_ratio, test_ratio = args.split[0], args.split[1]
     if test_ratio == 1:
         test_subjects = subjects
@@ -202,7 +201,7 @@ def main():
                 for session in sessions:
                     train_ctr += 1
                     for contrast in contrast_list:
-                        train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],
+                        train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],contrast,
                                                                      label_suffix,
                                                                      path_out_imagesTr,
                                                                      path_out_labelsTr, train_ctr + test_ctr,
@@ -213,7 +212,7 @@ def main():
             else:
                 train_ctr += 1
                 for contrast in contrast_list:
-                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], label_suffix,
+                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],contrast, label_suffix,
                                                                  path_out_imagesTr,
                                                                  path_out_labelsTr, train_ctr + test_ctr, train_images,
                                                                  train_labels,
@@ -232,7 +231,7 @@ def main():
                 for session in sessions:
                     test_ctr += 1
                     for contrast in contrast_list:
-                        test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], label_suffix,
+                        test_images, test_labels = convert_subject(root, subject, channel_dict[contrast],contrast, label_suffix,
                                                                    path_out_imagesTs,
                                                                    path_out_labelsTs, train_ctr + test_ctr, test_images,
                                                                    test_labels, True, session)
@@ -242,7 +241,7 @@ def main():
             else:
                 test_ctr += 1
                 for contrast in contrast_list:
-                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], label_suffix,
+                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],contrast, label_suffix,
                                                                  path_out_imagesTs,
                                                                  path_out_labelsTs, train_ctr + test_ctr, test_images,
                                                                  test_labels,
