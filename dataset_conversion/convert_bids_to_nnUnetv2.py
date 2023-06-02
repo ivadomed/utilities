@@ -29,29 +29,6 @@ import nibabel as nib
 import numpy as np
 
 
-def contrast2chanel(contrast):
-    """
-    Based on the documentation:
-    "channel_names": {
-        "0": "FLAIR",
-        "1": "T1w",
-        "2": "T2",
-        "3": "T2w"
-    }
-    """
-    channel_name = {
-        "FLAIR": 0,
-        "T1w": 1,
-        "T2": 2,
-        "T2w": 3
-    }
-    if contrast in channel_name.keys():
-        return channel_name[contrast]
-    else:
-        print(f"Contrast not know using channel value 4")
-        return 4
-
-
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
@@ -59,10 +36,10 @@ def get_parser():
                         help='Path to BIDS dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True,
                         help='Path to output directory. Example: ~/data/dataset-nnunet')
-    # TODO accept multi contrast dataset
-    parser.add_argument('--contrast', required=True, type=str,
-                        help='Subject contrast. Example: T2w or acq-sag_T2w')
-    #TODO accept multi value label
+    parser.add_argument('--contrast', required=True, type=str, nargs="+",
+                        help='Subject contrast unique or multi contrast (separated with space). Example: T2w or '
+                             'acq-sag_T2w')
+    # TODO accept multi value label
     parser.add_argument('--label-suffix', type=str,
                         help='Label suffix. Example: lesion-manual or seg-manual, if None no label used')
     parser.add_argument('--dataset-name', '-dname', default='MyDataset', type=str,
@@ -79,15 +56,15 @@ def get_parser():
 
 
 def convert_subject(root, subject, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
-                    list_labels, is_ses,session=None):
+                    list_labels, is_ses, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
 
     Args:
-        root (str): Path to BIDS dataset directory .
-        subject (str): Subject name .
+        root (str): Path to BIDS dataset directory.
+        subject (str): Subject name.
         contrast (str): Type of contrast.
-        label_suffix (str): suffix of the label in derivatives .
+        label_suffix (str): suffix of the label in derivatives.
         path_out_images (str): path to the images directory in the new dataset (test or train).
         path_out_labels (str): path to the labels directory in the new dataset (test or train).
         counter (int): Number of subject already treated.
@@ -101,12 +78,14 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
         list_labels (list): List with all the labels path in the new dataset with one new append.
 
     """
+    # TODO ignore file if contrast not available
     if is_ses:
         # TODO verify that using _ between subject and session is problematic or not
         subject_image_file = os.path.join(root, subject, session, 'anat',
                                           f"{subject}_{session}_{contrast}.nii.gz")
         subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
                                           f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
+        # TODO use regex
         sub_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
                    str(Path(subject_image_file).name).split('_')[1]
     else:
@@ -119,7 +98,7 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
     if label_suffix != None:
         if os.path.exists(subject_label_file):
             subject_image_file_nnunet = os.path.join(path_out_images,
-                                                     f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
+                                                     f"{sub_name}_{counter:03d}_{contrast:04d}.nii.gz")
             subject_label_file_nnunet = os.path.join(path_out_labels,
                                                      f"{sub_name}_{counter:03d}.nii.gz")
             list_images.append(subject_image_file_nnunet)
@@ -131,7 +110,7 @@ def convert_subject(root, subject, contrast, label_suffix, path_out_images, path
             print(f"Label for image {subject_image_file} does not exist this file is ignored")
     else:
         subject_image_file_nnunet = os.path.join(path_out_images,
-                                                 f"{sub_name}_{counter:03d}_{contrast2chanel(contrast):04d}.nii.gz")
+                                                 f"{sub_name}_{counter:03d}_{contrast:04d}.nii.gz")
         list_images.append(subject_image_file_nnunet)
         # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
         os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
@@ -161,9 +140,13 @@ def main():
                                  f'Dataset{args.dataset_number:03d}_{args.dataset_name}'))
 
     # Get filename
-    contrast = args.contrast
+    contrast_list = args.contrast
+    channel_dict = {}
+    for i, contrast in enumerate(contrast_list):
+        channel_dict[contrast] = i
+
     label_suffix = args.label_suffix
-    if label_suffix == None:
+    if label_suffix is None:
         print(f"No suffix label provided, ignoring label to create this dataset")
 
     # create individual directories for train and test images and labels
@@ -218,19 +201,23 @@ def main():
 
                 for session in sessions:
                     train_ctr += 1
-                    train_images, train_labels = convert_subject(root, subject, contrast, label_suffix,
-                                                                 path_out_imagesTr,
-                                                                 path_out_labelsTr, train_ctr + test_ctr, train_images,
-                                                                 train_labels, True,session)
+                    for contrast in contrast_list:
+                        train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],
+                                                                     label_suffix,
+                                                                     path_out_imagesTr,
+                                                                     path_out_labelsTr, train_ctr + test_ctr,
+                                                                     train_images, train_labels, True, session)
 
 
             # No session folder(s) exist
             else:
                 train_ctr += 1
-                train_images, train_labels = convert_subject(root, subject, contrast, label_suffix, path_out_imagesTr,
-                                                             path_out_labelsTr, train_ctr + test_ctr, train_images,
-                                                             train_labels,
-                                                             False)
+                for contrast in contrast_list:
+                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], label_suffix,
+                                                                 path_out_imagesTr,
+                                                                 path_out_labelsTr, train_ctr + test_ctr, train_images,
+                                                                 train_labels,
+                                                                 False)
 
         # Test subjects
         elif subject in test_subjects:
@@ -244,19 +231,22 @@ def main():
 
                 for session in sessions:
                     test_ctr += 1
-                    test_images, test_labels = convert_subject(root, subject, contrast, label_suffix,
-                                                               path_out_imagesTs,
-                                                               path_out_labelsTs, train_ctr + test_ctr, test_images,
-                                                               test_labels, True, session)
+                    for contrast in contrast_list:
+                        test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], label_suffix,
+                                                                   path_out_imagesTs,
+                                                                   path_out_labelsTs, train_ctr + test_ctr, test_images,
+                                                                   test_labels, True, session)
 
 
             # No session folder(s) exist
             else:
                 test_ctr += 1
-                train_images, train_labels = convert_subject(root, subject, contrast, label_suffix, path_out_imagesTs,
-                                                             path_out_labelsTs, train_ctr + test_ctr, test_images,
-                                                             test_labels,
-                                                             False)
+                for contrast in contrast_list:
+                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], label_suffix,
+                                                                 path_out_imagesTs,
+                                                                 path_out_labelsTs, train_ctr + test_ctr, test_images,
+                                                                 test_labels,
+                                                                 False)
 
 
         else:
@@ -277,7 +267,6 @@ def main():
     json_dict = OrderedDict()
 
     # The following keys are the most important ones.
-    #TODO only add channel for the used contrast
     """
     channel_names:
         Channel names must map the index to the name of the channel. For BIDS, this refers to the contrast suffix.
@@ -307,13 +296,7 @@ def main():
         Remember that nnU-Net expects consecutive values for labels! nnU-Net also expects 0 to be background!
     """
 
-    json_dict['channel_names'] = {  # Remove unused channels
-        "0": "FLAIR",
-        "1": "T1w",
-        "2": "T2",
-        "3": "T2w",
-        "4": "CHANGE"
-    }
+    json_dict['channel_names'] = {v: k for k, v in channel_dict.items()}
 
     json_dict['labels'] = {
         "background": 0,
