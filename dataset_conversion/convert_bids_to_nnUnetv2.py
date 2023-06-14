@@ -14,7 +14,7 @@ Usage example:
 
 Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
-
+import re
 import argparse
 import pathlib
 from pathlib import Path
@@ -24,7 +24,6 @@ from collections import OrderedDict
 import pandas as pd
 from loguru import logger
 from sklearn.model_selection import train_test_split
-
 import nibabel as nib
 import numpy as np
 
@@ -32,10 +31,8 @@ import numpy as np
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
-    parser.add_argument('--path-data', required=True,
-                        help='Path to BIDS dataset. Example: ~/data/dataset')
-    parser.add_argument('--path-out', required=True,
-                        help='Path to output directory. Example: ~/data/dataset-nnunet')
+    parser.add_argument('--path-data', required=True, help='Path to BIDS dataset. Example: ~/data/dataset')
+    parser.add_argument('--path-out', required=True, help='Path to output directory. Example: ~/data/dataset-nnunet')
     parser.add_argument('--contrast', required=True, type=str, nargs="+",
                         help='Subject contrast unique or multi contrast (separated with space). Example: T2w or '
                              'acq-sag_T2w')
@@ -55,8 +52,8 @@ def get_parser():
     return parser
 
 
-def convert_subject(root, subject,channel, contrast, label_suffix, path_out_images, path_out_labels, counter, list_images,
-                    list_labels, is_ses, session=None):
+def convert_subject(root, subject, channel, contrast, label_suffix, path_out_images, path_out_labels, counter,
+                    list_images, list_labels, is_ses, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
 
@@ -67,45 +64,41 @@ def convert_subject(root, subject,channel, contrast, label_suffix, path_out_imag
         label_suffix (str): suffix of the label in derivatives.
         path_out_images (str): path to the images directory in the new dataset (test or train).
         path_out_labels (str): path to the labels directory in the new dataset (test or train).
-        counter (int): Number of subject already treated.
-        list_images (list): List with all the images path in the new dataset.
-        list_labels (list): List with all the labels path in the new dataset.
-        is_ses (bool): Is the dataset session structured.
+        counter (int): counter for iterating through the number of subjects.
+        list_images (list): List containing the paths of training/testing images in the nnUNetv2 format.
+        list_labels (list): List containing the paths of training/testing labels in the nnUNetv2 format.
+        is_ses (bool): Whether or not the dataset has ses folders for each subject.
         session (str): Session name or None if dataset without session .
+        channel (int): Contrast value as integer compatible with nnUNet documentation (ex: T1 = 1, T2 = 2, FLAIR = 3).
 
     Returns:
-        list_images (list): List with all the images path in the new dataset with one new append.
-        list_labels (list): List with all the labels path in the new dataset with one new append.
+        list_images (list): List containing the paths of training/testing images in the nnUNetv2 format.
+        list_labels (list): List containing the paths of training/testing labels in the nnUNetv2 format.
 
     """
     if is_ses:
         # TODO verify that using _ between subject and session is problematic or not
-        subject_image_file = os.path.join(root, subject, session, 'anat',
-                                          f"{subject}_{session}_{contrast}.nii.gz")
+        subject_image_file = os.path.join(root, subject, session, 'anat', f"{subject}_{session}_{contrast}.nii.gz")
         subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
                                           f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
         # TODO use regex
-        sub_name = str(Path(subject_image_file).name).split('_')[0] + '_' + \
-                   str(Path(subject_image_file).name).split('_')[1]
+        sub_name = re.match(r'^([^_]+_[^_]+)', Path(subject_image_file).name).group(1)
     else:
-        subject_image_file = os.path.join(root, subject, 'anat',
-                                          f"{subject}_{contrast}.nii.gz")
+        subject_image_file = os.path.join(root, subject, 'anat', f"{subject}_{contrast}.nii.gz")
         subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
                                           f"{subject}_{contrast}_{label_suffix}.nii.gz")
-        sub_name = str(Path(subject_image_file).name).split('_')[0]
+        sub_name = re.match(r'^([^_]+)', Path(subject_image_file).name).group(1)
 
     if os.path.exists(subject_image_file):
         if label_suffix is not None:
             if os.path.exists(subject_label_file):
-                subject_label_file_nnunet = os.path.join(path_out_labels,
-                                                         f"{sub_name}_{counter:03d}.nii.gz")
+                subject_label_file_nnunet = os.path.join(path_out_labels, f"{sub_name}_{counter:03d}.nii.gz")
                 list_labels.append(subject_label_file_nnunet)
                 # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
                 os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
             else:
                 print(f"Label for image {subject_image_file} does not exist this file is ignored")
-        subject_image_file_nnunet = os.path.join(path_out_images,
-                                                     f"{sub_name}_{counter:03d}_{channel:04d}.nii.gz")
+        subject_image_file_nnunet = os.path.join(path_out_images, f"{sub_name}_{counter:03d}_{channel:04d}.nii.gz")
         list_images.append(subject_image_file_nnunet)
         # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
         os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
@@ -186,6 +179,7 @@ def main():
     # Initialize counters for train and test subjects
     train_ctr, test_ctr = 0, 0
     # Loop through all subjects
+    # TODO try to avoid duplication
     for subject in subjects:
 
         # Train subjects
@@ -201,21 +195,19 @@ def main():
                 for session in sessions:
                     train_ctr += 1
                     for contrast in contrast_list:
-                        train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],contrast,
-                                                                     label_suffix,
-                                                                     path_out_imagesTr,
-                                                                     path_out_labelsTr, train_ctr + test_ctr,
-                                                                     train_images, train_labels, True, session)
+                        train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
+                                                                     label_suffix, path_out_imagesTr, path_out_labelsTr,
+                                                                     train_ctr + test_ctr, train_images, train_labels,
+                                                                     True, session)
 
 
             # No session folder(s) exist
             else:
                 train_ctr += 1
                 for contrast in contrast_list:
-                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],contrast, label_suffix,
-                                                                 path_out_imagesTr,
-                                                                 path_out_labelsTr, train_ctr + test_ctr, train_images,
-                                                                 train_labels,
+                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
+                                                                 label_suffix, path_out_imagesTr, path_out_labelsTr,
+                                                                 train_ctr + test_ctr, train_images, train_labels,
                                                                  False)
 
         # Test subjects
@@ -231,21 +223,19 @@ def main():
                 for session in sessions:
                     test_ctr += 1
                     for contrast in contrast_list:
-                        test_images, test_labels = convert_subject(root, subject, channel_dict[contrast],contrast, label_suffix,
-                                                                   path_out_imagesTs,
-                                                                   path_out_labelsTs, train_ctr + test_ctr, test_images,
-                                                                   test_labels, True, session)
+                        test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
+                                                                   label_suffix, path_out_imagesTs, path_out_labelsTs,
+                                                                   train_ctr + test_ctr, test_images, test_labels, True,
+                                                                   session)
 
 
             # No session folder(s) exist
             else:
                 test_ctr += 1
                 for contrast in contrast_list:
-                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast],contrast, label_suffix,
-                                                                 path_out_imagesTs,
-                                                                 path_out_labelsTs, train_ctr + test_ctr, test_images,
-                                                                 test_labels,
-                                                                 False)
+                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
+                                                                 label_suffix, path_out_imagesTs, path_out_labelsTs,
+                                                                 train_ctr + test_ctr, test_images, test_labels, False)
 
 
         else:
@@ -278,14 +268,16 @@ def main():
     Note that the channel names may influence the normalization scheme!! Learn more in the documentation.
 
     labels:
-        This will tell nnU-Net what labels to expect. Important: This will also determine whether you use region-based training or not.
+        This will tell nnU-Net what labels to expect. Important: This will also determine whether you use region-based 
+        training or not.
         Example regular labels:
         {
             'background': 0,
             'left atrium': 1,
             'some other label': 2
         }
-        Example region-based training: https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/region_based_training.md
+        Example region-based training: 
+        https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/region_based_training.md
         {
             'background': 0,
             'whole tumor': (1, 2, 3),
