@@ -96,12 +96,13 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
                 list_labels.append(subject_label_file_nnunet)
                 # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
                 os.symlink(os.path.abspath(subject_label_file), subject_label_file_nnunet)
+                subject_image_file_nnunet = os.path.join(path_out_images,
+                                                         f"{sub_name}_{counter:03d}_{channel:04d}.nii.gz")
+                list_images.append(subject_image_file_nnunet)
+                # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
+                os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
             else:
-                print(f"Label for image {subject_image_file} does not exist this file is ignored")
-        subject_image_file_nnunet = os.path.join(path_out_images, f"{sub_name}_{counter:03d}_{channel:04d}.nii.gz")
-        list_images.append(subject_image_file_nnunet)
-        # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
-        os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
+                print(f"Label for image {subject_image_file} does not exist this subject is ignored")
     else:
         print(f"contrast {contrast} for subject {sub_name} does not exist this contrast is ignored")
 
@@ -193,7 +194,7 @@ def main():
                 sessions.sort()
 
                 for session in sessions:
-                    train_ctr += 1
+                    train_ctr = len(train_images)
                     for contrast in contrast_list:
                         train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                      label_suffix, path_out_imagesTr, path_out_labelsTr,
@@ -203,7 +204,7 @@ def main():
 
             # No session folder(s) exist
             else:
-                train_ctr += 1
+                train_ctr = len(train_images)
                 for contrast in contrast_list:
                     train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                  label_suffix, path_out_imagesTr, path_out_labelsTr,
@@ -221,7 +222,7 @@ def main():
                 sessions.sort()
 
                 for session in sessions:
-                    test_ctr += 1
+                    test_ctr = len(test_images)
                     for contrast in contrast_list:
                         test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                    label_suffix, path_out_imagesTs, path_out_labelsTs,
@@ -231,7 +232,7 @@ def main():
 
             # No session folder(s) exist
             else:
-                test_ctr += 1
+                test_ctr = len(test_images)
                 for contrast in contrast_list:
                     train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                  label_suffix, path_out_imagesTs, path_out_labelsTs,
