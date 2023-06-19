@@ -295,7 +295,7 @@ def main():
         "label": 1,
     }
 
-    json_dict["numTraining"] = train_ctr
+    json_dict["numTraining"] = train_ctr +1
     # Needed for finding the files correctly. IMPORTANT! File endings must match between images and segmentations!
     json_dict['file_ending'] = ".nii.gz"
     json_dict["overwrite_image_reader_writer"] = "SimpleITKIO"
