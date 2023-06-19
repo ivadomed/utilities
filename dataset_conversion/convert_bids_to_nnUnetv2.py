@@ -57,7 +57,7 @@ def get_parser():
 
 
 def convert_subject(root, subject, channel, contrast, label_suffix, path_out_images, path_out_labels, counter,
-                    list_images, list_labels, is_ses, copy, session=None):
+                    list_images, list_labels, is_ses, copy, DS_name, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
 
@@ -72,8 +72,9 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
         list_images (list): List containing the paths of training/testing images in the nnUNetv2 format.
         list_labels (list): List containing the paths of training/testing labels in the nnUNetv2 format.
         is_ses (bool): Whether or not the dataset has ses folders for each subject.
-        session (str): Session name or None if dataset without session .
+        session (str): Session name or None if dataset without session.
         copy (bool): The files in the nnUNet dataset need to be symlink of copy file (False: symlink, True: copy).
+        DS_name (str): Dataset name.
         channel (int): Contrast value as integer compatible with nnUNet documentation (ex: T1 = 1, T2 = 2, FLAIR = 3).
 
     Returns:
@@ -95,11 +96,11 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
     if os.path.exists(subject_image_file):
         if label_suffix is not None:
             if os.path.exists(subject_label_file):
-                subject_label_file_nnunet = os.path.join(path_out_labels, f"{sub_name}_{counter:03d}.nii.gz")
+                subject_label_file_nnunet = os.path.join(path_out_labels, f"{DS_name}-{sub_name}_{counter:03d}.nii.gz")
                 list_labels.append(subject_label_file_nnunet)
                 # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
                 subject_image_file_nnunet = os.path.join(path_out_images,
-                                                         f"{sub_name}_{counter:03d}_{channel:04d}.nii.gz")
+                                                         f"{DS_name}-{sub_name}_{counter:03d}_{channel:04d}.nii.gz")
                 list_images.append(subject_image_file_nnunet)
                 # copy the files to new structure using symbolic links (prevents duplication of data and saves space)
                 if copy:
@@ -121,6 +122,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     copy = args.copy
+    DS_name = args.dataset_name
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
     path_out = Path(os.path.join(os.path.abspath(os.path.expanduser(args.path_out)),
                                  f'Dataset{args.dataset_number:03d}_{args.dataset_name}'))
@@ -193,7 +195,7 @@ def main():
                         train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                      label_suffix, path_out_imagesTr, path_out_labelsTr,
                                                                      train_ctr + test_ctr, train_images, train_labels,
-                                                                     True, copy, session)
+                                                                     True, copy, DS_name, session)
 
 
             # No session folder(s) exist
@@ -203,7 +205,7 @@ def main():
                     train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                  label_suffix, path_out_imagesTr, path_out_labelsTr,
                                                                  train_ctr + test_ctr, train_images, train_labels,
-                                                                 False, copy)
+                                                                 False, copy, DS_name)
 
         # Test subjects
         elif subject in test_subjects:
@@ -221,7 +223,7 @@ def main():
                         test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                    label_suffix, path_out_imagesTs, path_out_labelsTs,
                                                                    train_ctr + test_ctr, test_images, test_labels, True,
-                                                                   copy, session)
+                                                                   copy,DS_name, session)
 
 
             # No session folder(s) exist
@@ -231,7 +233,7 @@ def main():
                     train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                  label_suffix, path_out_imagesTs, path_out_labelsTs,
                                                                  train_ctr + test_ctr, test_images, test_labels, False,
-                                                                 copy)
+                                                                 copy, DS_name)
 
 
         else:
