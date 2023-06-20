@@ -35,9 +35,9 @@ def separate_labels(label_file, dataset_label):
     return 0
 
 
-def write_json(filename):
+def write_json(filename, dataset_name):
     data = {
-        "Author": "nnUNetV2_to_bids.py (git link?)",
+        "Author": f"nnUNetV2_to_bids.py (git link?) from nnUNet dataset {dataset_name}",
         "Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
@@ -95,7 +95,7 @@ def main():
             label_file = os.path.join(root, folder[1], label_name)
             pathlib.Path(image_new_dir).mkdir(parents=True, exist_ok=True)
             pathlib.Path(label_new_dir).mkdir(parents=True, exist_ok=True)
-            write_json(os.path.join(label_new_dir, json_name))
+            write_json(os.path.join(label_new_dir, json_name), str(root).split('/')[-1])
             if copy:
                 shutil.copy2(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
                 shutil.copy2(os.path.abspath(label_file), os.path.join(label_new_dir, bids_label_name))
