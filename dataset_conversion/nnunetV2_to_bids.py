@@ -10,14 +10,9 @@ import argparse
 import shutil
 import pathlib
 from pathlib import Path
+import datetime
 import json
 import os
-from collections import OrderedDict
-import pandas as pd
-from loguru import logger
-from sklearn.model_selection import train_test_split
-import nibabel as nib
-import numpy as np
 
 
 def get_parser():
@@ -31,8 +26,15 @@ def get_parser():
     return parser
 
 
-def convert_subject():
-    return 0
+def write_json(filename):
+    data = {
+        "Author": "nnUNetV2_to_bids.py (git link?)",
+        "Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    # Write the data to the JSON file
+    with open(filename, "w") as file:
+        json.dump(data, file, indent=4)
 
 
 def get_subject_info(file_name, contrast_dict):
@@ -59,32 +61,36 @@ def main():
     path_out = Path(os.path.abspath(os.path.expanduser(args.path_out)))
     with open(os.path.join(root, "dataset.json"), 'r') as json_file:
         dataset_info = json.load(json_file)
-    print(dataset_info)
-    for image_file in os.listdir(f"{root}/imagesTr/"):
-        sub_name, ses, bids_nb, bids_contrast, contrast = get_subject_info(image_file, dataset_info["channel_names"])
-        # TODO separate the label file in multiple file one by integer and get the coresponding label
-        #  in the dataset file
-        if ses:
-            image_new_dir = os.path.join(path_out, sub_name, ses, 'anat')
-            label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, ses, 'anat')
-            bids_image_name = f"{sub_name}_{ses}_{contrast}.nii.gz"
-            bids_label_name = f"{sub_name}_{contrast}_label-manual.nii.gz"
-            label_name = f"{sub_name}_{ses}_{bids_nb}.nii.gz"
-        else:
-            image_new_dir = os.path.join(path_out, sub_name, 'anat')
-            label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, 'anat')
-            bids_image_name = f"{sub_name}_{contrast}.nii.gz"
-            bids_label_name = f"{sub_name}_{contrast}_label-manual.nii.gz"
-            label_name = f"{sub_name}_{bids_nb}.nii.gz"
-        label_file = os.path.join(root, 'labelsTr', label_name)
-        pathlib.Path(image_new_dir).mkdir(parents=True, exist_ok=True)
-        pathlib.Path(label_new_dir).mkdir(parents=True, exist_ok=True)
-        if copy:
-            shutil.copy2(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
-            shutil.copy2(os.path.abspath(label_file), os.path.join(label_new_dir, bids_label_name))
-        else:
-            os.symlink(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
-            os.symlink(os.path.abspath(label_file), os.path.join(label_new_dir, bids_label_name))
+    for folder in [("imagesTr", "labelsTr"),("imagesTs", "labelsTs")]:
+        for image_file in os.listdir(f"{root}/{folder[0]}/"):
+            sub_name, ses, bids_nb, bids_contrast, contrast = get_subject_info(image_file, dataset_info["channel_names"])
+            # TODO separate the label file in multiple file one by integer and get the coresponding label
+            #  in the dataset file
+            if ses:
+                image_new_dir = os.path.join(path_out, sub_name, ses, 'anat')
+                label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, ses, 'anat')
+                bids_image_name = f"{sub_name}_{ses}_{contrast}.nii.gz"
+                bids_label_name = f"{sub_name}_{ses}_{contrast}_label-manual.nii.gz"
+                json_name = f"{sub_name}_{ses}_{contrast}_label-manual.json"
+                label_name = f"{sub_name}_{ses}_{bids_nb}.nii.gz"
+            else:
+                image_new_dir = os.path.join(path_out, sub_name, 'anat')
+                label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, 'anat')
+                bids_image_name = f"{sub_name}_{contrast}.nii.gz"
+                bids_label_name = f"{sub_name}_{contrast}_label-manual.nii.gz"
+                json_name = f"{sub_name}_{contrast}_label-manual.json"
+                label_name = f"{sub_name}_{bids_nb}.nii.gz"
+            image_file = os.path.join(root, folder[0], image_file)
+            label_file = os.path.join(root, folder[1], label_name)
+            pathlib.Path(image_new_dir).mkdir(parents=True, exist_ok=True)
+            pathlib.Path(label_new_dir).mkdir(parents=True, exist_ok=True)
+            write_json(os.path.join(label_new_dir, json_name))
+            if copy:
+                shutil.copy2(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
+                shutil.copy2(os.path.abspath(label_file), os.path.join(label_new_dir, bids_label_name))
+            else:
+                os.symlink(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
+                os.symlink(os.path.abspath(label_file), os.path.join(label_new_dir, bids_label_name))
 
 
 if __name__ == '__main__':
