@@ -26,6 +26,15 @@ def get_parser():
     return parser
 
 
+def separate_labels(label_file, dataset_label):
+    value_label = {v: k for k, v in dataset_label.items()}
+    for value in value_label.keys():
+        if value != 0:
+            print(value_label[value])
+            #TODO create new nifti image with only this value and _label-manual.nii.gz
+    return 0
+
+
 def write_json(filename):
     data = {
         "Author": "nnUNetV2_to_bids.py (git link?)",
@@ -61,9 +70,11 @@ def main():
     path_out = Path(os.path.abspath(os.path.expanduser(args.path_out)))
     with open(os.path.join(root, "dataset.json"), 'r') as json_file:
         dataset_info = json.load(json_file)
-    for folder in [("imagesTr", "labelsTr"),("imagesTs", "labelsTs")]:
+    separate_labels("_", dataset_info["labels"])
+    for folder in [("imagesTr", "labelsTr"), ("imagesTs", "labelsTs")]:
         for image_file in os.listdir(f"{root}/{folder[0]}/"):
-            sub_name, ses, bids_nb, bids_contrast, contrast = get_subject_info(image_file, dataset_info["channel_names"])
+            sub_name, ses, bids_nb, bids_contrast, contrast = get_subject_info(image_file,
+                                                                               dataset_info["channel_names"])
             # TODO separate the label file in multiple file one by integer and get the coresponding label
             #  in the dataset file
             if ses:
