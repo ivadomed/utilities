@@ -47,7 +47,11 @@ def separate_labels(label_file, original_label, dataset_label, label_new_dir, da
         if value != 0:
             seg_name = value_label[value]
             voxel_val = np.zeros_like(data)
-            voxel_val[data == value] = 1
+            if type(value) == list:
+                for sub_val in value:
+                    voxel_val[data == sub_val] = 1
+            else:
+                voxel_val[data == value] = 1
             voxel_img = nib.Nifti1Image(voxel_val, nifti_file.affine, nifti_file.header)
             path_to_label = os.path.join(label_new_dir, f"{label_file}-{seg_name}_seg.nii.gz")
             nib.save(voxel_img, path_to_label)
