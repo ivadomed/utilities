@@ -45,8 +45,8 @@ def get_parser():
                         help='Ratios of training (includes validation) and test splits lying between 0-1. '
                              'Example: --split 0.8 0.2')
     parser.add_argument('--copy', '-cp', type=bool, default=False,
-                        help='Making symlink (False) or copying (True) the files in the nnUNet dataset, default = False. '
-                             'Example for symlink: --copy True')
+                        help='Making symlink (False) or copying (True) the files in the nnUNet dataset, '
+                             'default = False. Example for symlink: --copy True')
     return parser
 
 
@@ -117,6 +117,7 @@ def main():
     args = parser.parse_args()
     copy = args.copy
     DS_name = args.dataset_name
+    contrast = args.contrast
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
     path_out = Path(os.path.join(os.path.abspath(os.path.expanduser(args.path_out)),
                                  f'Dataset{args.dataset_number:03d}_{args.dataset_name}'))
@@ -203,7 +204,6 @@ def main():
 
         # Test subjects
         elif subject in test_subjects:
-
             # Session folder(s) exist
             # Check if session folder(s) exist
             if any('ses' in folder for folder in os.listdir(os.path.join(root, subject))):
@@ -283,7 +283,7 @@ def main():
 
     json_dict['labels'] = {
         "background": 0,
-        "label": 1,
+        f"{contrast}": 1,
     }
 
     json_dict["numTraining"] = train_ctr + 1
