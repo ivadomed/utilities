@@ -31,9 +31,12 @@ def get_parser():
     parser.add_argument('--contrast', required=True, type=str, nargs="+",
                         help='Subject contrast unique or multi contrast (separated with space). Example: T2w or '
                              'acq-sag_T2w')
-    # TODO accept multi value label
     parser.add_argument('--label-suffix', type=str,
                         help='Label suffix. Example: lesion-manual or seg-manual, if None no label used')
+    parser.add_argument('--softseg', nargs='+', type=str, help= 'Voxel value class name (separated with space).'
+                        'If the label file is a soft segmentation, '
+                        'voxel value will be disctretize in class. Example: small medium large xlarge '
+                        '(4 class with values [0, 0.25), [0.25, 0.5), [0.5, 0.75), [0.75, 1) respectivly')
     parser.add_argument('--dataset-name', '-dname', default='MyDataset', type=str,
                         help='Specify the task name. Example: MyDataset')
     parser.add_argument('--dataset-number', '-dnum', default=501, type=int,
@@ -112,7 +115,9 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
 
     return list_images, list_labels
 
+def discretise_soft_seg():
 
+    return 0
 def main():
     parser = get_parser()
     args = parser.parse_args()
