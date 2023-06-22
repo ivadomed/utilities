@@ -115,9 +115,21 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
 
     return list_images, list_labels
 
-def discretise_soft_seg():
+def discretise_soft_seg(label_file, class_names):
+    nifti_file = nib.load(label_file)
+    data = nifti_file.get_fdata()
+    class_voxel = np.zeros_like(data)
+    #TODO max intervals
+    interval =[]
+    for i, value in enumerate(interval):
+        class_voxel[data == value] = i+1
+    voxel_img = nib.Nifti1Image(class_voxel, nifti_file.affine, nifti_file.header)
 
-    return 0
+    path_to_label =
+    nib.save(voxel_img, path_to_label)
+    json_name = f"{label_file}-{seg_name}_seg.json"
+    write_json(os.path.join(label_new_dir, json_name), dataset_name)
+    return
 def main():
     parser = get_parser()
     args = parser.parse_args()
