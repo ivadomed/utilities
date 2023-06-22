@@ -22,8 +22,9 @@ def get_parser():
     parser.add_argument('--path-data', required=True, help='Path to nnUNet dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True, help='Path to output directory. Example: ~/data/dataset-bids')
     parser.add_argument('--copy', '-cp', type=bool, default=False,
-                        help='Making symlink (False) or copying (True) the files in the Bids dataset, default = False. '
-                             'Example for symlink: --copy True')
+                        help='Making symlink (False) or copying (True) the files in the Bids dataset. '
+                             'This option only affects the image file, the label file is copied regardless of the '
+                             ' option, default = False. Example for symlink: --copy True')
     return parser
 
 
@@ -32,7 +33,7 @@ def separate_labels(label_file, original_label, dataset_label, label_new_dir, da
     Function to make one nifti file for each possible voxel value
 
     Args:
-        label_file (str): Path to the label file ...label-
+        label_file (str): Path to the label file '...label-'
         original_label (str): Path to the label file in the nnUNetV2 dataset
         dataset_label (str): Labels keys from the dataset.json file
         label_new_dir (str): Folder for the label file in Bids format
@@ -145,10 +146,8 @@ def main():
             image_file = os.path.join(root, folder[0], image_file)
             if copy:
                 shutil.copy2(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
-                # shutil.copy2(os.path.abspath(label_file), os.path.join(label_new_dir, bids_label_name))
             else:
                 os.symlink(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
-                # os.symlink(os.path.abspath(label_file), os.path.join(label_new_dir, bids_label_name))
 
 
 if __name__ == '__main__':
