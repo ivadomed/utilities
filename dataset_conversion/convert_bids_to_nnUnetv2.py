@@ -120,10 +120,10 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
 def discretise_soft_seg(label_file, interval):
     nifti_file = nib.load(label_file)
     data = nifti_file.get_fdata()
-    class_voxel = np.zeros_like(data)
+    class_voxel = np.zeros_like(data, dtype=int)
     # TODO max intervals
     for i, value in enumerate(interval):
-        class_voxel[data > value] = 1
+        class_voxel[data > value] = i+1
     voxel_img = nib.Nifti1Image(class_voxel, nifti_file.affine, nifti_file.header)
     nib.save(voxel_img, label_file)
     return 0
@@ -135,7 +135,7 @@ def main():
     copy = args.copy
     softseg = args.softseg
     if softseg:
-        #copy = True
+        copy = True
         print("copy")
     DS_name = args.dataset_name
     contrast = args.contrast
