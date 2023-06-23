@@ -10,6 +10,7 @@ Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
 import re
 import argparse
+import datetime
 import shutil
 import pathlib
 from pathlib import Path
@@ -33,10 +34,10 @@ def get_parser():
                              'acq-sag_T2w')
     parser.add_argument('--label-suffix', type=str,
                         help='Label suffix. Example: lesion-manual or seg-manual, if None no label used')
-    parser.add_argument('--softseg', nargs='+', type=str, help= 'Voxel value class name (separated with space).'
-                        'If the label file is a soft segmentation, '
-                        'voxel value will be disctretize in class. Example: small medium large xlarge '
-                        '(4 class with values [0, 0.25), [0.25, 0.5), [0.5, 0.75), [0.75, 1) respectivly')
+    parser.add_argument('--softseg', nargs='+', type=float, help='Voxel value class name (separated with space).'
+                                                                 'If the label file is a soft segmentation, '
+                                                                 'voxel value will be disctretize in class. Example: --softseg 0.25 0.5 0.75  '
+                                                                 '(4 class with values [0, 0.25), [0.25, 0.5), [0.5, 0.75), [0.75, 1) respectivly')
     parser.add_argument('--dataset-name', '-dname', default='MyDataset', type=str,
                         help='Specify the task name. Example: MyDataset')
     parser.add_argument('--dataset-number', '-dnum', default=501, type=int,
@@ -115,31 +116,32 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
 
     return list_images, list_labels
 
-def discretise_soft_seg(label_file, class_names):
+
+def discretise_soft_seg(label_file, interval):
     nifti_file = nib.load(label_file)
     data = nifti_file.get_fdata()
     class_voxel = np.zeros_like(data)
-    #TODO max intervals
-    interval =[]
+    # TODO max intervals
     for i, value in enumerate(interval):
-        class_voxel[data == value] = i+1
+        class_voxel[data > value] = 1
     voxel_img = nib.Nifti1Image(class_voxel, nifti_file.affine, nifti_file.header)
+    nib.save(voxel_img, label_file)
+    return 0
 
-    path_to_label =
-    nib.save(voxel_img, path_to_label)
-    json_name = f"{label_file}-{seg_name}_seg.json"
-    write_json(os.path.join(label_new_dir, json_name), dataset_name)
-    return
+
 def main():
     parser = get_parser()
     args = parser.parse_args()
     copy = args.copy
+    softseg = args.softseg
+    if softseg:
+        #copy = True
+        print("copy")
     DS_name = args.dataset_name
     contrast = args.contrast
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
     path_out = Path(os.path.join(os.path.abspath(os.path.expanduser(args.path_out)),
                                  f'Dataset{args.dataset_number:03d}_{args.dataset_name}'))
-
     # Get filename
     contrast_list = args.contrast
     channel_dict = {}
@@ -250,6 +252,9 @@ def main():
 
         else:
             print("Skipping file, could not be located in the Train or Test splits split.", subject)
+    if softseg:
+        for file in train_labels + test_labels:
+            discretise_soft_seg(file, softseg)
 
     logger.info(f"Number of training and validation subjects (including sessions): {train_ctr}")
     logger.info(f"Number of test subjects (including sessions): {test_ctr}")
