@@ -36,8 +36,8 @@ def get_parser():
                         help='Label suffix. Example: lesion-manual or seg-manual, if None no label used')
     parser.add_argument('--softseg', nargs='+', type=float, help='Voxel value class name (separated with space).'
                                                                  'If the label file is a soft segmentation, '
-                                                                 'voxel value will be disctretize in class. Example: --softseg 0.25 0.5 0.75  '
-                                                                 '(4 class with values [0, 0.25), [0.25, 0.5), [0.5, 0.75), [0.75, 1) respectivly')
+                                                                 'voxel value will be disctretize in class. Example: --softseg 0.001 0.25 0.5 0.75  '
+                                                                 '(4 class with values [0.001, 0.25), [0.25, 0.5), [0.5, 0.75), [0.75, 1) respectivly')
     parser.add_argument('--dataset-name', '-dname', default='MyDataset', type=str,
                         help='Specify the task name. Example: MyDataset')
     parser.add_argument('--dataset-number', '-dnum', default=501, type=int,
@@ -88,7 +88,7 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
         sub_name = re.match(r'^([^_]+_[^_]+)', Path(subject_image_file).name).group(1)
     else:
         subject_image_file = os.path.join(root, subject, 'anat', f"{subject}_{contrast}.nii.gz")
-        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
+        subject_label_file = os.path.join(root, 'derivatives', 'labels_softseg', subject, 'anat',
                                           f"{subject}_{contrast}_{label_suffix}.nii.gz")
         sub_name = re.match(r'^([^_]+)', Path(subject_image_file).name).group(1)
 
@@ -120,10 +120,15 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
 def discretise_soft_seg(label_file, interval):
     nifti_file = nib.load(label_file)
     data = nifti_file.get_fdata()
-    class_voxel = np.zeros_like(data, dtype=int)
+    class_voxel = np.zeros_like(data, dtype=np.int16)
     # TODO max intervals
     for i, value in enumerate(interval):
-        class_voxel[data > value] = i+1
+        lower_bound = interval[i]
+        if i == len(interval) - 1:
+            class_voxel[data >= lower_bound] = i + 1
+        else:
+            upper_bound = interval[i + 1]
+            class_voxel[(data >= lower_bound) & (data < upper_bound)] = i + 1
     voxel_img = nib.Nifti1Image(class_voxel, nifti_file.affine, nifti_file.header)
     nib.save(voxel_img, label_file)
     return 0
@@ -136,7 +141,6 @@ def main():
     softseg = args.softseg
     if softseg:
         copy = True
-        print("copy")
     DS_name = args.dataset_name
     contrast = args.contrast
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
@@ -244,10 +248,10 @@ def main():
             else:
                 test_ctr = len(test_images)
                 for contrast in contrast_list:
-                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
-                                                                 label_suffix, path_out_imagesTs, path_out_labelsTs,
-                                                                 train_ctr + test_ctr, test_images, test_labels, False,
-                                                                 copy, DS_name)
+                    test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
+                                                               label_suffix, path_out_imagesTs, path_out_labelsTs,
+                                                               train_ctr + test_ctr, test_images, test_labels, False,
+                                                               copy, DS_name)
 
 
         else:
@@ -305,9 +309,12 @@ def main():
     json_dict['channel_names'] = {v: k for k, v in channel_dict.items()}
 
     json_dict['labels'] = {
-        "background": 0,
-        f"{contrast}": 1,
-    }
+        "background": 0}
+    if softseg:
+        for i, contrast_class in enumerate(softseg):
+            json_dict['labels'][f"{label_suffix}_{i + 1}"] = i + 1
+    else:
+        json_dict['labels'][label_suffix] = 1
 
     json_dict["numTraining"] = train_ctr + 1
     # Needed for finding the files correctly. IMPORTANT! File endings must match between images and segmentations!
