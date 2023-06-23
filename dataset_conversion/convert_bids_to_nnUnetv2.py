@@ -56,7 +56,7 @@ def get_parser():
 
 # TODO: Add function to convert float softseg by discretizing voxel value to integer class
 def convert_subject(root, subject, channel, contrast, label_suffix, path_out_images, path_out_labels, counter,
-                    list_images, list_labels, is_ses, copy, DS_name, session=None):
+                    list_images, list_labels, is_ses, copy, DS_name, is_softseg, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
 
@@ -75,20 +75,26 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
         copy (bool): The files in the nnUNet dataset need to be symlink of copy file (False: symlink, True: copy).
         DS_name (str): Dataset name.
         channel (int): Contrast value as integer compatible with nnUNet documentation (ex: T1 = 1, T2 = 2, FLAIR = 3).
+        is_softseg (None or list): The label file have softseg values (if None label is not softseg)
 
     Returns:
         list_images (list): List containing the paths of training/testing images in the nnUNetv2 format.
         list_labels (list): List containing the paths of training/testing labels in the nnUNetv2 format.
 
     """
+    if is_softseg:
+        label_start_path = os.path.join(root, 'derivatives', 'labels_softseg', subject)
+    else:
+        label_start_path = os.path.join(root, 'derivatives', 'labels', subject)
     if is_ses:
         subject_image_file = os.path.join(root, subject, session, 'anat', f"{subject}_{session}_{contrast}.nii.gz")
-        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
+
+        subject_label_file = os.path.join(label_start_path, session, 'anat',
                                           f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
         sub_name = re.match(r'^([^_]+_[^_]+)', Path(subject_image_file).name).group(1)
     else:
         subject_image_file = os.path.join(root, subject, 'anat', f"{subject}_{contrast}.nii.gz")
-        subject_label_file = os.path.join(root, 'derivatives', 'labels_softseg', subject, 'anat',
+        subject_label_file = os.path.join(label_start_path, 'anat',
                                           f"{subject}_{contrast}_{label_suffix}.nii.gz")
         sub_name = re.match(r'^([^_]+)', Path(subject_image_file).name).group(1)
 
@@ -110,7 +116,7 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
                     os.symlink(os.path.abspath(subject_image_file), subject_image_file_nnunet)
 
             else:
-                print(f"Label for image {subject_image_file} does not exist this {sub_name} is ignored")
+                print(f"Label {subject_label_file} for image {subject_image_file} does not exist this {sub_name} is ignored")
     else:
         print(f"contrast {contrast} for subject {sub_name} does not exist this contrast is ignored")
 
@@ -214,7 +220,7 @@ def main():
                         train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                      label_suffix, path_out_imagesTr, path_out_labelsTr,
                                                                      train_ctr + test_ctr, train_images, train_labels,
-                                                                     True, copy, DS_name, session)
+                                                                     True, copy, DS_name, softseg, session)
 
 
             # No session folder(s) exist
@@ -224,7 +230,7 @@ def main():
                     train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                  label_suffix, path_out_imagesTr, path_out_labelsTr,
                                                                  train_ctr + test_ctr, train_images, train_labels,
-                                                                 False, copy, DS_name)
+                                                                 False, copy, DS_name, softseg)
 
         # Test subjects
         elif subject in test_subjects:
@@ -241,7 +247,7 @@ def main():
                         test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                    label_suffix, path_out_imagesTs, path_out_labelsTs,
                                                                    train_ctr + test_ctr, test_images, test_labels, True,
-                                                                   copy, DS_name, session)
+                                                                   copy, DS_name, softseg, session)
 
 
             # No session folder(s) exist
@@ -251,7 +257,7 @@ def main():
                     test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                label_suffix, path_out_imagesTs, path_out_labelsTs,
                                                                train_ctr + test_ctr, test_images, test_labels, False,
-                                                               copy, DS_name)
+                                                               copy, DS_name, softseg)
 
 
         else:
