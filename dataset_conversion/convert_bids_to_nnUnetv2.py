@@ -4,7 +4,7 @@ the format can be found here: https://github.com/MIC-DKFZ/nnUNet/blob/master/doc
 
 Usage example:
     python convert_bids_to_nnUNetv2.py --path-data ~/data/dataset --path-out ~/data/dataset-nnunet
-                    --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 --seed 99 --copy False
+                    --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 --seed 99
 
 Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
@@ -44,14 +44,14 @@ def get_parser():
                         help='Ratios of training (includes validation) and test splits lying between 0-1. '
                              'Example: --split 0.8 0.2')
     parser.add_argument('--copy', '-cp', type=bool, default=False,
-                        help='Making symlink (False) or copying (True) the files in the nnUNet dataset, '
-                             'default = False. Example for symlink: --copy True')
+                        help='Copying (True) the files in the nnUNet dataset, '
+                             'default = False. Example for symlink: ø, Example for copy: --copy')
     parser.add_argument('--softseg', nargs='+', type=float, help='Voxel value class name (separated with space).'
                                                                  'If the label file is a soft segmentation, voxel value'
-                                                                 ' will be disctretize in class. Example:'
+                                                                 ' will be discretize in class. Example:'
                                                                  '--softseg 0.001 0.25 0.5 0.75  '
                                                                  '(4 class with values [0.001, 0.25), [0.25, 0.5), '
-                                                                 '[0.5, 0.75), [0.75, 1) respectivly')
+                                                                 '[0.5, 0.75), [0.75, 1) respectively')
     return parser
 
 
