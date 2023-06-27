@@ -24,7 +24,7 @@ def get_parser():
     parser.add_argument('--copy', '-cp', type=bool, default=False,
                         help='Making symlink (False) or copying (True) the files in the Bids dataset. '
                              'This option only affects the image file, the label file is copied regardless of the '
-                             ' option, default = False. Example for symlink: --copy True')
+                             ' option, default = False. Example for symlink: ø, Example for copy: --copy')
     return parser
 
 
