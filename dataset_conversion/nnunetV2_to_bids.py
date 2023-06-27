@@ -56,27 +56,31 @@ def separate_labels(label_file, original_label, dataset_label, label_new_dir, da
             voxel_img = nib.Nifti1Image(voxel_val, nifti_file.affine, nifti_file.header)
             path_to_label = os.path.join(label_new_dir, f"{label_file}-{seg_name}_seg.nii.gz")
             nib.save(voxel_img, path_to_label)
-            json_name = f"{label_file}-{seg_name}_seg.json"
-            write_json(os.path.join(label_new_dir, json_name), dataset_name)
+            # json_name = f"{label_file}-{seg_name}_seg.json"
+            # write_json(os.path.join(label_new_dir, json_name), dataset_name)
+    path_to_label = os.path.join(label_new_dir, f"{label_file}-softseg.nii.gz")
+    shutil.copy2(original_label, path_to_label)
+    # json_name = f"{label_file}-softseg.json"
+    # write_json(os.path.join(label_new_dir, json_name), dataset_name)
 
 
-def write_json(filename, dataset_name):
-    """
-    Save a json file with the label image created
-
-    Args:
-        filename (str): Json filename (with path)
-        dataset_name (str): Name of the dataset
-    """
-    data = {
-        "Author": f"nnUNetV2_to_bids.py (git link?) from nnUNet dataset {dataset_name}",
-        "Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-    # Write the data to the JSON file
-    with open(filename, "w") as file:
-        json.dump(data, file, indent=4)
-
+# Under discussion
+# def write_json(filename, dataset_name):
+#    """
+#    Save a json file with the label image created
+#
+#    Args:
+#        filename (str): Json filename (with path)
+#        dataset_name (str): Name of the dataset
+#    """
+#    data = {
+#        "Author": f"nnUNetV2_to_bids.py (git link?) from nnUNet dataset {dataset_name}",
+#        "Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#    }
+#
+#    # Write the data to the JSON file
+#    with open(filename, "w") as file:
+#        json.dump(data, file, indent=4)
 
 def get_subject_info(file_name, contrast_dict):
     """
@@ -96,17 +100,19 @@ def get_subject_info(file_name, contrast_dict):
     """
     name = file_name.split(".")[0]
     info = name.split("_")
+    bids_nb = info[-2]
+    contrast = info[-1]
     if len(info) == 4:
         ses = info.pop(1)
     else:
         ses = None
-    sub_name = info[0]
-    bids_nb = info[1]
-    info[2] = info[2].lstrip('0')
-    if info[2] == '':
-        info[2] = '0'
-    contrast = contrast_dict[info[2]]
-    return sub_name, ses, bids_nb, info[2], contrast
+    sub_name = "_".join(info[:-2])
+    contrast = contrast.lstrip('0')
+    if contrast == '':
+        contrast = '0'
+    contrast_bids = contrast_dict[contrast]
+    print(sub_name, ses, bids_nb, contrast, contrast_bids)
+    return sub_name, ses, bids_nb, contrast, contrast_bids
 
 
 def main():
