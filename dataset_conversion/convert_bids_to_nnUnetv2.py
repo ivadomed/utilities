@@ -28,6 +28,8 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
     parser.add_argument('--path-data', required=True, help='Path to BIDS dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True, help='Path to output directory. Example: ~/data/dataset-nnunet')
+    parser.add_argument('--path-derivatives', type=str, default='labels',
+                        help='Folder name of the derivatives. Example: --path-derivatives labels_softseg')
     parser.add_argument('--contrast', required=True, type=str, nargs="+",
                         help='Subject contrast unique or multi contrast (separated with space). Example: T2w or '
                              'acq-sag_T2w')
@@ -56,7 +58,7 @@ def get_parser():
 
 
 def convert_subject(root, subject, channel, contrast, label_suffix, path_out_images, path_out_labels, counter,
-                    list_images, list_labels, is_ses, copy, DS_name, is_softseg, session=None):
+                    list_images, list_labels, is_ses, copy, DS_name, derivatives, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
 
@@ -82,10 +84,7 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
         list_labels (list): List containing the paths of training/testing labels in the nnUNetv2 format.
 
     """
-    if is_softseg:
-        label_start_path = os.path.join(root, 'derivatives', 'labels_softseg', subject)
-    else:
-        label_start_path = os.path.join(root, 'derivatives', 'labels', subject)
+    label_start_path = os.path.join(root, 'derivatives', derivatives, subject)
     if is_ses:
         subject_image_file = os.path.join(root, subject, session, 'anat', f"{subject}_{session}_{contrast}.nii.gz")
 
@@ -151,6 +150,7 @@ def main():
     args = parser.parse_args()
     copy = args.copy
     softseg = args.softseg
+    derivatives = args.path_derivatives
     label_suffix = args.label_suffix
     DS_name = args.dataset_name
     contrast_list = args.contrast
@@ -227,7 +227,7 @@ def main():
                         train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                      label_suffix, path_out_imagesTr, path_out_labelsTr,
                                                                      train_ctr + test_ctr, train_images, train_labels,
-                                                                     True, copy, DS_name, softseg, session)
+                                                                     True, copy, DS_name, derivatives, session)
 
 
             # No session folder(s) exist
@@ -237,7 +237,7 @@ def main():
                     train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                  label_suffix, path_out_imagesTr, path_out_labelsTr,
                                                                  train_ctr + test_ctr, train_images, train_labels,
-                                                                 False, copy, DS_name, softseg)
+                                                                 False, copy, DS_name, derivatives)
 
         # Test subjects
         elif subject in test_subjects:
@@ -254,7 +254,7 @@ def main():
                         test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                    label_suffix, path_out_imagesTs, path_out_labelsTs,
                                                                    train_ctr + test_ctr, test_images, test_labels, True,
-                                                                   copy, DS_name, softseg, session)
+                                                                   copy, DS_name, derivatives, session)
 
 
             # No session folder(s) exist
@@ -264,7 +264,7 @@ def main():
                     test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                label_suffix, path_out_imagesTs, path_out_labelsTs,
                                                                train_ctr + test_ctr, test_images, test_labels, False,
-                                                               copy, DS_name, softseg)
+                                                               copy, DS_name, derivatives)
 
 
         else:
