@@ -48,12 +48,6 @@ def get_parser():
     parser.add_argument('--copy', '-cp', type=bool, default=False,
                         help='Copying (True) the files in the nnUNet dataset, '
                              'default = False. Example for symlink: ø, Example for copy: --copy')
-    parser.add_argument('--softseg', nargs='+', type=float, help='Voxel value class name (separated with space).'
-                                                                 'If the label file is a soft segmentation, voxel value'
-                                                                 ' will be discretize in class. Example:'
-                                                                 '--softseg 0.001 0.25 0.5 0.75  '
-                                                                 '(4 class with values [0.001, 0.25), [0.25, 0.5), '
-                                                                 '[0.5, 0.75), [0.75, 1) respectively')
     return parser
 
 
@@ -77,7 +71,6 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
         copy (bool): The files in the nnUNet dataset need to be symlink of copy file (False: symlink, True: copy).
         DS_name (str): Dataset name.
         channel (int): Contrast value as integer compatible with nnUNet documentation (ex: T1 = 1, T2 = 2, FLAIR = 3).
-        is_softseg (None or list): The label file have softseg values (if value = None label are not softseg)
 
     Returns:
         list_images (list): List containing the paths of training/testing images in the nnUNetv2 format.
@@ -123,42 +116,17 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
     return list_images, list_labels
 
 
-def discretise_soft_seg(label_file, interval):
-    """
-    Discretize softseg in integer class.
 
-    Args:
-        label_file (str): Path to the label file
-        interval (list): List with class boundary
-    """
-    nifti_file = nib.load(label_file)
-    data = nifti_file.get_fdata()
-    class_voxel = np.zeros_like(data, dtype=np.int16)
-    for i, value in enumerate(interval):
-        lower_bound = interval[i]
-        if i == len(interval) - 1:
-            class_voxel[data >= lower_bound] = i + 1
-        else:
-            upper_bound = interval[i + 1]
-            class_voxel[(data >= lower_bound) & (data < upper_bound)] = i + 1
-    voxel_img = nib.Nifti1Image(class_voxel, nifti_file.affine, nifti_file.header)
-    nib.save(voxel_img, label_file)
 
 
 def main():
     parser = get_parser()
     args = parser.parse_args()
     copy = args.copy
-    softseg = args.softseg
     derivatives = args.path_derivatives
     label_suffix = args.label_suffix
     DS_name = args.dataset_name
     contrast_list = args.contrast
-    if softseg:
-        copy = True
-        for i in range(1, len(softseg)):
-            if softseg[i] <= softseg[i - 1]:
-                raise ValueError(f"Softseg values {softseg} are not increasing.")
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
     path_out = Path(os.path.join(os.path.abspath(os.path.expanduser(args.path_out)),
                                  f'Dataset{args.dataset_number:03d}_{args.dataset_name}'))
@@ -269,9 +237,6 @@ def main():
 
         else:
             print("Skipping file, could not be located in the Train or Test splits split.", subject)
-    if softseg:
-        for file in train_labels + test_labels:
-            discretise_soft_seg(file, softseg)
 
     logger.info(f"Number of training and validation subjects (including sessions): {train_ctr}")
     logger.info(f"Number of test subjects (including sessions): {test_ctr}")
@@ -323,11 +288,7 @@ def main():
 
     json_dict['labels'] = {
         "background": 0}
-    if softseg:
-        for i, contrast_class in enumerate(softseg):
-            json_dict['labels'][f"{label_suffix}_{i + 1}"] = i + 1
-    else:
-        json_dict['labels'][label_suffix] = 1
+    json_dict['labels'][label_suffix] = 1
 
     json_dict["numTraining"] = train_ctr + 1
     # Needed for finding the files correctly. IMPORTANT! File endings must match between images and segmentations!
