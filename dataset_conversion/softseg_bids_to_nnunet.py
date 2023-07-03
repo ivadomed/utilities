@@ -4,7 +4,7 @@ import numpy as np
 from collections import OrderedDict
 
 
-
+#TODO MORE TEST
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Convert softseg float value to integer class value')
