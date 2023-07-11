@@ -1,3 +1,9 @@
+"""
+Run inference on a whole dataset or on individual images using nnUNetv2.
+
+Authors: Naga Karthik
+"""
+
 import os
 import argparse
 import torch
