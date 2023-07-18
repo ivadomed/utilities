@@ -21,6 +21,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
     parser.add_argument('--path-data', required=True, help='Path to nnUNet dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True, help='Path to output directory. Example: ~/data/dataset-bids')
+    parser.add_argument('--suffix', required=True, help='Suffix of the label file Example: sub-003_T2w_SUFFIX.nii.gz')
     parser.add_argument('--copy', '-cp', type=bool, default=False,
                         help='Making symlink (False) or copying (True) the files in the Bids dataset. '
                              'This option only affects the image file, the label file is copied regardless of the '
@@ -39,7 +40,6 @@ def separate_labels(label_file, original_label, dataset_label, label_new_dir, da
         label_new_dir (str): Folder for the label file in Bids format
         dataset_name (str): nnUNetV2 dataset name
     """
-    # TODO for region based segmentation add the different part to make one part
     # (this issue: https://github.com/ivadomed/data-conversion/pull/15#issuecomment-1599351103)
     value_label = {v: k for k, v in dataset_label.items()}
     nifti_file = nib.load(original_label)
@@ -47,7 +47,7 @@ def separate_labels(label_file, original_label, dataset_label, label_new_dir, da
     for value in value_label.keys():
         if value != 0:
             seg_name = value_label[value]
-            voxel_val = np.zeros_like(data)
+            voxel_val = np.zeros_like(data, dtype=np.int16)
             if type(value) == list:
                 for sub_val in value:
                     voxel_val[data == sub_val] = 1
@@ -112,7 +112,6 @@ def get_subject_info(file_name, contrast_dict):
     if contrast == '':
         contrast = '0'
     contrast_bids = contrast_dict[contrast]
-    print(sub_name, ses, bids_nb, contrast, contrast_bids)
     return sub_name, ses, bids_nb, contrast, contrast_bids
 
 
@@ -120,41 +119,41 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     copy = args.copy
+    suffix =args.suffix
     root = Path(os.path.abspath(os.path.expanduser(args.path_data)))
     path_out = Path(os.path.abspath(os.path.expanduser(args.path_out)))
     with open(os.path.join(root, "dataset.json"), 'r') as json_file:
         dataset_info = json.load(json_file)
     for folder in [("imagesTr", "labelsTr"), ("imagesTs", "labelsTs")]:
         for image_file in os.listdir(f"{root}/{folder[0]}/"):
-            sub_name, ses, bids_nb, bids_contrast, contrast = get_subject_info(image_file,
-                                                                               dataset_info["channel_names"])
-            # TODO separate the label file in multiple file one by integer and get the coresponding label
-            #  in the dataset file
-            if ses:
-                image_new_dir = os.path.join(path_out, sub_name, ses, 'anat')
-                label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, ses, 'anat')
-                pathlib.Path(image_new_dir).mkdir(parents=True, exist_ok=True)
-                pathlib.Path(label_new_dir).mkdir(parents=True, exist_ok=True)
-                bids_image_name = f"{sub_name}_{ses}_{contrast}.nii.gz"
-                label_name = f"{sub_name}_{ses}_{bids_nb}.nii.gz"
-                label_file = os.path.join(root, folder[1], label_name)
-                separate_labels(f"{sub_name}_{ses}_{contrast}_label", label_file, dataset_info["labels"], label_new_dir,
-                                str(root).split('/')[-1])
-            else:
-                image_new_dir = os.path.join(path_out, sub_name, 'anat')
-                label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, 'anat')
-                pathlib.Path(image_new_dir).mkdir(parents=True, exist_ok=True)
-                pathlib.Path(label_new_dir).mkdir(parents=True, exist_ok=True)
-                bids_image_name = f"{sub_name}_{contrast}.nii.gz"
-                label_name = f"{sub_name}_{bids_nb}.nii.gz"
-                label_file = os.path.join(root, folder[1], label_name)
-                separate_labels(f"{sub_name}_{contrast}_label", label_file, dataset_info["labels"], label_new_dir,
-                                str(root).split('/')[-1])
-            image_file = os.path.join(root, folder[0], image_file)
-            if copy:
-                shutil.copy2(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
-            else:
-                os.symlink(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
+            if not image_file.startswith('.'):
+                sub_name, ses, bids_nb, bids_contrast, contrast = get_subject_info(image_file,
+                                                                                   dataset_info["channel_names"])
+                if ses: # Multiple Session per subject
+                    image_new_dir = os.path.join(path_out, sub_name, ses, 'anat')
+                    label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, ses, 'anat')
+                    pathlib.Path(image_new_dir).mkdir(parents=True, exist_ok=True)
+                    pathlib.Path(label_new_dir).mkdir(parents=True, exist_ok=True)
+                    bids_image_name = f"{sub_name}_{ses}_{contrast}.nii.gz"
+                    label_name = f"{sub_name}_{ses}_{bids_nb}.nii.gz"
+                    label_file = os.path.join(root, folder[1], label_name)
+                    separate_labels(f"{sub_name}_{ses}_{contrast}_{suffix}", label_file, dataset_info["labels"], label_new_dir,
+                                    str(root).split('/')[-1])
+                else:
+                    image_new_dir = os.path.join(path_out, sub_name, 'anat')
+                    label_new_dir = os.path.join(path_out, 'derivatives/labels', sub_name, 'anat')
+                    pathlib.Path(image_new_dir).mkdir(parents=True, exist_ok=True)
+                    pathlib.Path(label_new_dir).mkdir(parents=True, exist_ok=True)
+                    bids_image_name = f"{sub_name}_{contrast}.nii.gz"
+                    label_name = f"{sub_name}_{bids_nb}.nii.gz"
+                    label_file = os.path.join(root, folder[1], label_name)
+                    separate_labels(f"{sub_name}_{contrast}_{suffix}", label_file, dataset_info["labels"], label_new_dir,
+                                    str(root).split('/')[-1])
+                image_file = os.path.join(root, folder[0], image_file)
+                if copy:
+                    shutil.copy2(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
+                else:
+                    os.symlink(os.path.abspath(image_file), os.path.join(image_new_dir, bids_image_name))
 
 
 if __name__ == '__main__':
