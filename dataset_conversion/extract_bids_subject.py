@@ -1,5 +1,5 @@
 """
-Extract image from BIDS dataset into one folder compatible with nnUNet inference.
+Extract image from BIDS dataset into one folder, and possibility to change filename in order to make it compatible with nnUNet inference.
 More information about nnUNet inference format can be found here: https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format_inference.md
 
 Usage example:
@@ -19,13 +19,13 @@ def get_parser():
     parser.add_argument('--path-bids', required=True, help='Path to BIDS dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True, help='Path to output directory. Example: ~/data/dataset-nnunet')
     parser.add_argument('--contrast', required=True, type=str, help='Contrast of the images to extract. Example: T2w')
-    parser.add_argument('--suffix', required=True, type=int,
-                        help='Contrast in the nnUNet format, 4 digit (maximum) corresponding to the one use in your dataset.json for training. Example: 0')
+    parser.add_argument('--suffix', required=False, type=int, default= -1,
+                        help='If used convert file to nnUNet, if not filename are unchanged. 4 digit (maximum) corresponding to the one use in your dataset.json for training. Example: 0')
     parser.add_argument('--copy', '-cp', type=bool, default=False,
                         help='Making symlink (False) or copying (True) the files in the nnUNet dataset, '
                              'default = False. Example for symlink: --copy True')
     parser.add_argument('--log', type=bool, default=False,
-                        help='Save a csv files with path before and after extraction of the files. Default = false')
+                        help='Save a csv file with path before and after extraction of the files. Default = false')
     return parser
 
 
@@ -47,7 +47,10 @@ def main():
                         extracted_files["old_path"].append(os.path.join(bids_path, item, root, file))
     for i,old_path in enumerate(extracted_files["old_path"]):
         old_name = old_path.split('/')[-1].split('_')[0]
-        new_path = os.path.join(out_path, f"{old_name}_{i:03}_{suffix:04}.nii.gz")
+        if suffix != -1:
+            new_path = os.path.join(out_path, f"{old_name}_{i:03}_{suffix:04}.nii.gz")
+        else:
+            new_path = os.path.join(out_path, old_path.split('/')[-1])
         if copy:
             shutil.copyfile(old_path, new_path)
             extracted_files["new_path"].append(new_path)
