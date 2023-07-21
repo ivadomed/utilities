@@ -7,12 +7,14 @@ Usage example:
 Théo Mathieu
 """
 # TODO check compatible orientation
+# Check with multiple channel only tested on one channel
 import argparse
 import shutil
 import os
 import pandas as pd
 import json
 import pathlib
+from collections import OrderedDict
 
 
 class CustomException(Exception):
@@ -90,12 +92,15 @@ def main():
     csv_log = {"old_name": [], "new_name":[], "old_dataset":[], "new_dataset":[]}
     labels = ["labelsTr", "labelsTs"]
     id_nb = 0
+    nb_train_sub = 0
     for dataset in path_in:
         for i, folder in enumerate(["imagesTr", "imagesTs"]):
             pathlib.Path(os.path.join(path_out, folder)).mkdir(parents=True, exist_ok=True)
             pathlib.Path(os.path.join(path_out, labels[i])).mkdir(parents=True, exist_ok=True)
             for old_name in os.listdir(os.path.join(dataset, folder)):
                 if old_name.startswith("sub-"):
+                    if i == 0:
+                        nb_train_sub += 1
                     # image name
                     csv_log["old_name"].append(old_name)
                     csv_log["old_dataset"].append(os.path.join(dataset, folder))
@@ -121,7 +126,22 @@ def main():
                         os.symlink(old_label_full, os.path.join(path_out, labels[i], new_label))
                     id_nb += 1
 
+    json_dict = OrderedDict()
+    json_dict['channel_names'] = new_channel
 
+    json_dict['labels'] = all_info[path_in[0]]["labels"]
+
+    json_dict["numTraining"] = nb_train_sub
+    # Needed for finding the files correctly. IMPORTANT! File endings must match between images and segmentations!
+    json_dict['file_ending'] = all_info[path_in[0]]["file_ending"]
+    json_dict["overwrite_image_reader_writer"] = all_info[path_in[0]]["overwrite_image_reader_writer"]
+
+    # create dataset_description.json
+    json_object = json.dumps(json_dict, indent=4)
+    # write to dataset description
+    # nn-unet requires it to be "dataset.json"
+    with open(os.path.join(path_out, "dataset.json"), "w") as outfile:
+        outfile.write(json_object)
 
     df = pd.DataFrame(csv_log)
     df.to_csv(os.path.join(path_out, "log.csv"), index=False)
