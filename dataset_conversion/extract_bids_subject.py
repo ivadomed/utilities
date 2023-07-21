@@ -20,7 +20,7 @@ def get_parser():
     parser.add_argument('--path-out', required=True, help='Path to output directory. Example: ~/data/dataset-nnunet')
     parser.add_argument('--contrast', required=True, type=str, help='Contrast of the images to extract. Example: T2w')
     parser.add_argument('--suffix', required=False, type=int, default= -1,
-                        help='If used convert file to nnUNet, if not filename are unchanged. 4 digit (maximum) corresponding to the one use in your dataset.json for training. Example: 0')
+                        help='If used convert file to nnUNet format, if not filename are unchanged. 4 digit (maximum) corresponding to the one use in your dataset.json for training. Example: 0')
     parser.add_argument('--copy', '-cp', type=bool, default=False,
                         help='Making symlink (False) or copying (True) the files in the nnUNet dataset, '
                              'default = False. Example for symlink: --copy True')
