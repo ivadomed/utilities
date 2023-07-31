@@ -4,7 +4,7 @@ the format can be found here: https://github.com/MIC-DKFZ/nnUNet/blob/master/doc
 
 Usage example:
     python convert_bids_to_nnUNetv2.py --path-data ~/data/dataset --path-out ~/data/dataset-nnunet
-                    --dataset-name MyDataset --dataset-number 501 --split 0.6 0.2 --seed 99 --copy False
+                    --dataset-name MyDataset --dataset-number 501 --split 0.8 0.2 --seed 99 --copy False
 
 Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
