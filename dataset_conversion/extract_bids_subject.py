@@ -40,7 +40,7 @@ def main():
     log = args.log
     extracted_files = {"old_path":[], "new_path":[], "copy/symlink":[]}
     for item in os.listdir(bids_path):
-        if os.path.isdir(os.path.join(bids_path, item)) and item.startswith("sub-"):
+        if os.path.isdir(os.path.join(bids_path, item)) and not item.startswith("."):
             for root, _, list_files in os.walk(os.path.join(bids_path,item)):
                 for file in list_files:
                     if file.endswith(f"_{contrast}.nii.gz"):
