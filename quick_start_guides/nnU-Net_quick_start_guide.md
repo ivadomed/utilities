@@ -1,6 +1,6 @@
 # nnU-Net quick-start guide
 
-This repository provides a quick-start guide for nnU-Net v2.
+This file provides a quick-start guide for nnU-Net v2.
 
 nnU-Net is a self-configuring framework for deep learning-based medical image segmentation; see [nnUNet GitHub page](https://github.com/MIC-DKFZ/nnUNet) and [publication](https://www.nature.com/articles/s41592-020-01008-z).
 
