@@ -15,7 +15,7 @@ import json
 import os
 import nibabel as nib
 
-
+#TODO NO JSON CREATION FOR NOW
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
