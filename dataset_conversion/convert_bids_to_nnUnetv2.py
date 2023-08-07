@@ -50,7 +50,6 @@ def get_parser():
     return parser
 
 
-# TODO: Add function to convert float softseg by discretizing voxel value to integer class
 def convert_subject(root, subject, channel, contrast, label_suffix, path_out_images, path_out_labels, counter,
                     list_images, list_labels, is_ses, copy, DS_name, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
@@ -225,7 +224,7 @@ def main():
             else:
                 test_ctr = len(test_images)
                 for contrast in contrast_list:
-                    train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
+                    test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                  label_suffix, path_out_imagesTs, path_out_labelsTs,
                                                                  train_ctr + test_ctr, test_images, test_labels, False,
                                                                  copy, DS_name)
