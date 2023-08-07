@@ -70,12 +70,12 @@ cd <PATH_WHERE_YOU_WANT_TO_CREATE_THE_FOLDERS>
 mkdir nnUNet_raw nnUNet_preprocessed nnUNet_results
 ```
 
-Then, include variables with paths to these folders in your .bashrc/.zshrc file (located in your home folder):
+Then, include variables with paths to these folders in your `~/.bashrc` or `~/.zshrc` file:
 
 ```
-export nnUNet_raw="/media/fabian/nnUNet_raw"
-export nnUNet_preprocessed="/media/fabian/nnUNet_preprocessed"
-export nnUNet_results="/media/fabian/nnUNet_results"
+export nnUNet_raw="${HOME}/nnUNet_raw"
+export nnUNet_preprocessed="${HOME}/nnUNet_preprocessed"
+export nnUNet_results="${HOME}/nnUNet_results"
 ```
 
 > **Note**
