@@ -1,17 +1,15 @@
 import argparse
-import os
 
 import nibabel as nib
 import numpy as np
-import pathlib
 
 
 # TODO MORE TEST
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Convert softseg float value to integer class value')
-    parser.add_argument('--path-data', required=True, help='Path to BIDS dataset. Example: ~/data/dataset')
-    parser.add_argument('--path-out', required=True, help='Path to save img')
+    parser.add_argument('--path-in', required=True, help='Path to softseg file')
+    parser.add_argument('--path-out', required=True, help='Path to save converted file')
     parser.add_argument('--softseg', nargs='+', type=float, help='Voxel value class name (separated with space).'
                                                                  'If the label file is a soft segmentation, voxel value'
                                                                  ' will be discretize in class. Example:'
@@ -52,14 +50,7 @@ def main():
         for i in range(1, len(softseg)):
             if softseg[i] <= softseg[i - 1]:
                 raise ValueError(f"Softseg values {softseg} are not increasing.")
-    print(path_in, softseg)
-    for sub in os.listdir(path_in):
-        if sub.startswith('sub-'):
-            for image in os.listdir(os.path.join(path_in, sub, "anat")):
-                if not image.endswith(".json"):
-                    pathlib.Path(path_out, sub, "anat").mkdir(parents=True, exist_ok=True)
-                    discretise_soft_seg(os.path.join(path_in, sub, "anat", image), softseg,
-                                        os.path.join(path_out, sub, "anat", image))
+    discretise_soft_seg(path_in, softseg, path_out)
 
 
 if __name__ == '__main__':
