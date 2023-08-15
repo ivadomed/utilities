@@ -168,22 +168,17 @@ git clone --depth 1 https://github.com/Inria-Visages/Anima-Scripts-Public.git
 git clone --depth 1 https://github.com/Inria-Visages/Anima-Scripts-Data-Public.git
 ```
 
-Config file
+Configure directories
 
 ```
 cd ~
 mkdir .anima/
 touch .anima/config.txt
-nano .anima/config.txt
-```
 
-Insert the following to the config file:
-
-```
-[anima-scripts]
-anima = ${HOME}/anima/Anima-Binaries-4.2/
-anima-scripts-public-root = ${HOME}/anima/Anima-Scripts-Public/
-extra-data-root = ${HOME}/anima/Anima-Scripts-Data-Public/
+echo "[anima-scripts]" >> .anima/config.txt
+echo "anima = ${HOME}/anima/Anima-Binaries-4.2/" >> .anima/config.txt
+echo "anima-scripts-public-root = ${HOME}/anima/Anima-Scripts-Public/" >> .anima/config.txt
+echo "extra-data-root = ${HOME}/anima/Anima-Scripts-Data-Public/" >> .anima/config.txt
 ```
 
 Run the script
