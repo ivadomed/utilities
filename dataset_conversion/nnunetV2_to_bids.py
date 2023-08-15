@@ -64,7 +64,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     copy = args.copy
-    suffix =args.suffix
+    suffix = args.suffix
     root = Path(os.path.abspath(os.path.expanduser(args.path_bids)))
     path_out = Path(os.path.abspath(os.path.expanduser(args.path_out)))
     with open(os.path.join(root, "dataset.json"), 'r') as json_file:
