@@ -64,14 +64,14 @@ def get_subject_info(file_name, contrast_dict):
     Get different information about the current subject
 
     Args:
-        file_name (str): Filename corresponding to the subject image
+        file_name (str): Filename corresponding to the subject image. Example sub-004_ses-01_001_0000.nii.gz
         contrast_dict (dict): Dictionary, key channel_names from dataset.json
 
     Returns:
         sub_names (str): Name of the subject. Example: sub-milan002
         ses (str): session name. Example: ses-01
         bids_nb (str): subject number in the BIDS dataset
-        info[2] (str): Contrast value in BIDS format. Example: 0001
+        info[2] (str): Contrast value in nnUNetV2 format. Example: 0001
         contrast (str): Image contrast (T2w, T1, ...)
 
     """
@@ -96,8 +96,10 @@ def main():
     args = parser.parse_args()
     copy = args.copy
     suffix = args.suffix
-    root = Path(os.path.abspath(os.path.expanduser(args.path_bids)))
+    root = Path(os.path.abspath(os.path.expanduser(args.path_in)))
     path_out = Path(os.path.abspath(os.path.expanduser(args.path_out)))
+    if not os.path.isfile(os.path.join(root, "dataset.json")):
+        raise ValueError("dataset.json not found in the path-in directory")
     with open(os.path.join(root, "dataset.json"), 'r') as json_file:
         dataset_info = json.load(json_file)
     for folder in [("imagesTr", "labelsTr"), ("imagesTs", "labelsTs")]:
