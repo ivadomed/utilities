@@ -38,7 +38,7 @@ def get_subject_info(file_name, contrast_dict):
 
     Returns:
         sub_names (str): Name of the subject. Example: sub-milan002
-        ses (str): ses name
+        ses (str): session name. Example: ses-01
         bids_nb (str): subject number in the BIDS dataset
         info[2] (str): Contrast value in BIDS format. Example 0001
         contrast (str): Image contrast (T2w, T1, ...)
