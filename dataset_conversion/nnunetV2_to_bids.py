@@ -2,6 +2,37 @@
 Converts nnUNetv2 dataset format to the BIDS-structured dataset. Full details about
 the format can be found here: https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md
 
+nnUNetV2 format:
+
+├── dataset.json
+├── imagesTr
+│   ├── sub-001_ses-01_001_0000.nii.gz
+...
+├── imagesTs
+│   ├── sub-004_ses-01_001_0000.nii.gz
+...
+├── labelsTr
+│   ├── sub-001_ses-01_001.nii.gz
+...
+├── labelsTs
+    ├──sub-zh004_ses-01_001.nii.gz
+...
+
+BIDS format:
+
+├── derivatives
+│   └── labels
+│       ├── sub-001
+│       │   ├── ses-01
+│       │   │   └── anat
+│       │   │       └── sub-001_ses-01_T2w_seg.nii.gz
+...
+├── sub-001
+│   ├── ses-01
+│   │   └── anat
+│   │       └── sub-001_ses-01_T2w.nii.gz
+...
+
 Théo Mathieu
 """
 
