@@ -16,7 +16,7 @@ import nibabel as nib
 
 def get_parser():
     # parse command line arguments
-    parser = argparse.ArgumentParser(description='Convert BIDS-structured dataset to nnUNetV2 database format.')
+    parser = argparse.ArgumentParser(description='Convert dataset in nnUNetV2 format to BIDS-structured dataset.')
     parser.add_argument('--path-in', required=True, help='Path to nnUNet dataset. Example: ~/data/dataset')
     parser.add_argument('--path-out', required=True, help='Path to output directory. Example: ~/data/dataset-bids')
     parser.add_argument('--suffix', required=True, help='Suffix of the label file Example: sub-003_T2w_SUFFIX.nii.gz')
