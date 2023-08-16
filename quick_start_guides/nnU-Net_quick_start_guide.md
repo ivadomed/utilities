@@ -102,8 +102,7 @@ nnUNet_raw/Dataset001_NAME1
     ├── ...
 ```
 
-You can use [our scripts](https://github.com/ivadomed/data-conversion/tree/main/dataset_conversion) to convert the data from BIDS to the nnU-Net format. 
-For details, see [ivadomed/data-conversion](https://github.com/ivadomed/data-conversion) repository.
+You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/dataset_conversion) to convert the data from BIDS to the nnU-Net format. 
 
 ## Train a model
 
