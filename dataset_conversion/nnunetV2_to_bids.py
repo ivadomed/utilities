@@ -1,6 +1,7 @@
 """
-Converts nnUNetv2 dataset format to the BIDS-structured dataset. Full details about
-the format can be found here: https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md
+This script converts the nnUNetv2 dataset format to the BIDS-structured dataset. 
+Details about the nnUNetv2 format can be found here: https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md
+Details about the BIDS standard can be found here: https://bids.neuroimaging.io
 
 nnUNetV2 format:
 
