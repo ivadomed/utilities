@@ -8,7 +8,7 @@ Installation
 cd ~
 mkdir anima/
 cd anima/
-wget -q https://github.com/Inria-Visages/Anima-Public/releases/download/v4.2/Anima-Ubuntu-4.2.zip.   # (change version to latest)
+wget -q https://github.com/Inria-Visages/Anima-Public/releases/download/v4.2/Anima-Ubuntu-4.2.zip .   # (change version to latest)
 unzip Anima-Ubuntu-4.2.zip
 rm Anima-Ubuntu-4.2.zip
 git lfs install
