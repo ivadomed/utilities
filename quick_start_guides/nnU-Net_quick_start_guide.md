@@ -102,6 +102,13 @@ nnUNet_raw/Dataset001_NAME1
     ├── ...
 ```
 
+- **imagesTr** contains the images belonging to the training cases. nnU-Net will perform pipeline configuration, training with 
+cross-validation, as well as finding postprocessing and the best ensemble using this data. 
+- **imagesTs** (optional) contains the images that belong to the test cases. nnU-Net does not use them! This could just 
+be a convenient location for you to store these images. Remnant of the Medical Segmentation Decathlon folder structure.
+- **labelsTr** contains the images with the ground truth segmentation maps for the training cases. 
+- **dataset.json** contains metadata of the dataset.
+  
 You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/dataset_conversion) to convert the data from BIDS to the nnU-Net format. 
 
 ## Train a model
