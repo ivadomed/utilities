@@ -6,6 +6,12 @@ Usage example:
     python convert_bids_to_nnUNetv2.py --path-data ~/data/dataset --path-out ~/data/dataset-nnunet
                     --dataset-name MyDataset --dataset-number 501 --split 0.8 0.2 --seed 99 --copy False
 
+NOTE: In a multi-contrast setting, the script (and nnUNet) assumes that all subjects have all the contrast and 
+that the contrasts are co-registered. nnUNet cannot handle missing modalities. 
+
+NOTE: If you have missing modalities/contrasts, then treat every modality/contrast as a different image and 
+then nnUNet will be happy. Note that `channel_dict` in this case should only specify any 1 of the contrast.
+
 Naga Karthik, Jan Valosek modified by Théo Mathieu
 """
 import re
