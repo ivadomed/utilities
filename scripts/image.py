@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class Image(object):
     """
-    Compacted version of the https://github.com/spinalcordtoolbox/spinalcordtoolbox/image.py image module
+    Compact version of SCT's Image Class (https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/spinalcordtoolbox/image.py#L245)
     Create an object that behaves similarly to nibabel's image object. Useful additions include: dims, change_orientation and getNonZeroCoordinates.
     """
 
