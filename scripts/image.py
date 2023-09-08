@@ -286,6 +286,65 @@ class Image(object):
         return self
 
 
+class SlicerOneAxis(object):
+    """
+    Image slicer to use when you don't care about the 2D slice orientation,
+    and don't want to specify them.
+    The slicer will just iterate through the right axis that corresponds to
+    its specification.
+
+    Can help getting ranges and slice indices.
+
+    Copied from https://github.com/spinalcordtoolbox/spinalcordtoolbox/image.py
+    """
+
+    def __init__(self, im, axis="IS"):
+        opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+        axis_labels = "LRPAIS"
+        if len(axis) != 2:
+            raise ValueError()
+        if axis[0] not in axis_labels:
+            raise ValueError()
+        if axis[1] not in axis_labels:
+            raise ValueError()
+        if axis[0] != opposite_character[axis[1]]:
+            raise ValueError()
+
+        for idx_axis in range(2):
+            dim_nr = im.orientation.find(axis[idx_axis])
+            if dim_nr != -1:
+                break
+        if dim_nr == -1:
+            raise ValueError()
+
+        # SCT convention
+        from_dir = im.orientation[dim_nr]
+        self.direction = +1 if axis[0] == from_dir else -1
+        self.nb_slices = im.dim[dim_nr]
+        self.im = im
+        self.axis = axis
+        self._slice = lambda idx: tuple([(idx if x in axis else slice(None)) for x in im.orientation])
+
+    def __len__(self):
+        return self.nb_slices
+
+    def __getitem__(self, idx):
+        """
+
+        :return: an image slice, at slicing index idx
+        :param idx: slicing index (according to the slicing direction)
+        """
+        if isinstance(idx, slice):
+            raise NotImplementedError()
+
+        if idx >= self.nb_slices:
+            raise IndexError("I just have {} slices!".format(self.nb_slices))
+
+        if self.direction == -1:
+            idx = self.nb_slices - 1 - idx
+
+        return self.im.data[self._slice(idx)]
+
 def get_dimension(im_file, verbose=1):
     """
     Copied from https://github.com/spinalcordtoolbox/spinalcordtoolbox/
@@ -573,8 +632,54 @@ def zeros_like(img, dtype=None):
     Similar to numpy.zeros_like(), the goal of the function is to show the developer's
     intent and avoid doing a copy, which is slower than initialization with a constant.
 
+    Copied from https://github.com/spinalcordtoolbox/spinalcordtoolbox/image.py
     """
     zimg = Image(np.zeros_like(img.data), hdr=img.hdr.copy())
     if dtype is not None:
         zimg.change_type(dtype)
     return zimg
+
+
+def empty_like(img, dtype=None):
+    """
+    :param img: reference image
+    :param dtype: desired data type (optional)
+    :return: an Image with the same shape and header, whose data is uninitialized
+
+    Similar to numpy.empty_like(), the goal of the function is to show the developer's
+    intent and avoid touching the allocated memory, because it will be written to
+    afterwards.
+
+    Copied from https://github.com/spinalcordtoolbox/spinalcordtoolbox/image.py
+    """
+    dst = change_type(img, dtype)
+    return dst
+
+
+def find_zmin_zmax(im, threshold=0.1):
+    """
+    Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given threshold.
+
+    :param im: Image object
+    :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
+    :return: [zmin, zmax]
+
+    Copied from https://github.com/spinalcordtoolbox/spinalcordtoolbox/image.py
+    """
+    slicer = SlicerOneAxis(im, axis="IS")
+
+    # Make sure image is not empty
+    if not np.any(slicer):
+        logger.error('Input image is empty')
+
+    # Iterate from bottom to top until we find data
+    for zmin in range(0, len(slicer)):
+        if np.any(slicer[zmin] > threshold):
+            break
+
+    # Conversely from top to bottom
+    for zmax in range(len(slicer) - 1, zmin, -1):
+        if np.any(slicer[zmax] > threshold):
+            break
+
+    return zmin, zmax
