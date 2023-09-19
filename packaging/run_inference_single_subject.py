@@ -20,9 +20,9 @@ Note: conda environment with nnUNetV2 is required to run this script.
 To temporarily suppress warnings raised by the nnUNet, you can run the following three commands in the same terminal
 session as the above command:
 
-export nnUNet_raw="${HOME}/nnUNet_raw"
-export nnUNet_preprocessed="${HOME}/nnUNet_preprocessed"
-export nnUNet_results="${HOME}/nnUNet_results"
+    export nnUNet_raw="${HOME}/nnUNet_raw"
+    export nnUNet_preprocessed="${HOME}/nnUNet_preprocessed"
+    export nnUNet_results="${HOME}/nnUNet_results"
 
 Note: the script contains reorientation of the input image to RPI orientation. This assumes that the model was trained
 on images in RPI orientation. If the model was trained on images in a different orientation, the reorientation should
