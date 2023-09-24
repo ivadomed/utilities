@@ -207,6 +207,9 @@ def main():
         # reorient the image to the original orientation using SCT
         os.system('sct_image -i {} -setorient {} -o {}'.format(fname_prediction, orig_orientation, fname_prediction))
 
+    # Copy fname_prediction to fname_file_out
+    shutil.copyfile(fname_prediction, fname_file_out)
+
     print('Deleting the temporary folder...')
     # Delete the temporary folder
     shutil.rmtree(tmpdir)
