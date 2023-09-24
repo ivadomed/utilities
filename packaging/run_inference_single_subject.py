@@ -196,6 +196,9 @@ def main():
     total_time = end - start
     print('Total inference time: {} minute(s) {} seconds'.format(int(total_time // 60), int(round(total_time % 60))))
 
+    # Check if the prediction file exists
+    if not glob.glob(os.path.join(tmpdir_nnunet, '*.nii.gz')):
+        raise FileNotFoundError(f'Prediction file not found in {tmpdir_nnunet}')
     # Copy .nii.gz file from tmpdir_nnunet to tmpdir
     pred_file = glob.glob(os.path.join(tmpdir_nnunet, '*.nii.gz'))[0]
     shutil.copyfile(pred_file, fname_prediction)
