@@ -135,8 +135,9 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    fname_file = args.i
-    fname_file_out = args.o
+    # Note: we use os.path.abspath to resolve relative paths
+    fname_file = os.path.abspath(args.i)
+    fname_file_out = os.path.abspath(args.o)
     print(f'\nFound {fname_file} file.')
 
     # Create temporary directory in the temp to store the reoriented images
