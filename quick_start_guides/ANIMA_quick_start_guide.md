@@ -8,7 +8,7 @@ Mathematical details on how these metrics are computed can be found here:
 
 - And in Section 4 of [this paper](https://portal.fli-iam.irisa.fr/files/2021/06/MS_Challenge_Evaluation_Challengers.pdf) (for how the subjects with no lesions are handled).
 
-Installation
+Installation for Linux
 
 ```
 cd ~
@@ -17,6 +17,20 @@ cd anima/
 wget -q https://github.com/Inria-Visages/Anima-Public/releases/download/v4.2/Anima-Ubuntu-4.2.zip .   # (change version to latest)
 unzip Anima-Ubuntu-4.2.zip
 rm Anima-Ubuntu-4.2.zip
+git lfs install
+git clone --depth 1 https://github.com/Inria-Visages/Anima-Scripts-Public.git
+git clone --depth 1 https://github.com/Inria-Visages/Anima-Scripts-Data-Public.git
+```
+
+Installation for macOS
+
+```
+cd ~
+mkdir anima/
+cd anima/
+wget -q https://github.com/Inria-Empenn/Anima-Public/releases/download/v4.2/Anima-macOS-4.2.zip .   # (change version to latest)
+unzip Anima-macOS-4.2.zip
+rm Anima-macOS-4.2.zip
 git lfs install
 git clone --depth 1 https://github.com/Inria-Visages/Anima-Scripts-Public.git
 git clone --depth 1 https://github.com/Inria-Visages/Anima-Scripts-Data-Public.git
