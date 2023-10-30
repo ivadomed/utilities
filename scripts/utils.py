@@ -3,9 +3,9 @@ import re
 from pathlib import Path
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import fetch_contrast
 from image import Image
 
 ## Global variables
@@ -140,7 +140,7 @@ def fetch_contrast(filename_path):
     return filename_path.rstrip(''.join(Path(filename_path).suffixes)).split('_')[-1]
 
 
-def edit_metric_dict(metrics_dict, img_path, mask_path, disc_label_suffix='_labels-disc-manual'):
+def edit_metric_dict(metrics_dict, img_path, mask_path, discs_mask_path):
     '''
     This function extracts information and metadata from an image and its mask. Values are then
     gathered inside a dictionary.
@@ -155,25 +155,19 @@ def edit_metric_dict(metrics_dict, img_path, mask_path, disc_label_suffix='_labe
     #----------------------- Extracting metadata ---------------------------#
     #-----------------------------------------------------------------------#
 
-    # Extract field of view information thanks to discs labels
-    if '_labels-disc' in mask_path:
-        discs_mask_path = mask_path
-    else:
-        discs_mask_path = change_mask_suffix(mask_path, new_suffix=disc_label_suffix)
-
-    if os.path.exists(discs_mask_path):
+    if os.path.exists(discs_mask_path): # TODO: deal with datasets with no discs labels
         discs_mask = Image(discs_mask_path)
-        disc_list = [list(coord)[-1] for coord in discs_mask.getNonZeroCoordinates(sorting='value')]
+        discs_labels = [list(coord)[-1] for coord in discs_mask.getNonZeroCoordinates(sorting='value')]
     else:
-        disc_list = []
+        discs_labels = []
     
     # Extract original image orientation 
     img = Image(img_path)
-    orientation = img.get_orientation
+    orientation = img.orientation
 
     # Extract image dimensions and resolutions
-    img_RSP = img.change_orientation("RSP")
-    nx, ny, nz, nt, px, py, pz, pt = img_RSP.get_dimension
+    img_RPI = img.change_orientation("RPI")
+    nx, ny, nz, nt, px, py, pz, pt = img_RPI.dim
 
     # Check for shape mismatch between mask and image
     if img.data.shape != Image(mask_path).data.shape:
@@ -187,10 +181,10 @@ def edit_metric_dict(metrics_dict, img_path, mask_path, disc_label_suffix='_labe
     #-----------------------------------------------------------------------#
     #--------------------- Adding metadata to dict -------------------------#
     #-----------------------------------------------------------------------#
-    list_of_metrics = [img_path, orientation, contrast, disc_list, shape_mismatch, nx, ny, nz, nt, px, py, pz, pt]
-    list_of_keys = ['img_path', 'orientation', 'contrast', 'disc_list', 'shape_mismatch', 'nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']
+    list_of_metrics = [img_path, orientation, contrast, discs_labels, shape_mismatch, nx, ny, nz, nt, px, py, pz, pt]
+    list_of_keys = ['img_path', 'orientation', 'contrast', 'discs_labels', 'shape_mismatch', 'nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']
     for key, metric in zip(list_of_keys, list_of_metrics):
-        if type(metric) != list():
+        if not isinstance(metric, list):
             metric = [metric]
         if key not in metrics_dict.keys():
             metrics_dict[key] = metric
@@ -200,47 +194,148 @@ def edit_metric_dict(metrics_dict, img_path, mask_path, disc_label_suffix='_labe
     return metrics_dict
 
 
-def save_violin(splits, values, output_path, y_axis):
+def save_violin(names, values, output_path, x_axis, y_axis):
     '''
     Create a violin plot
-    :param splits: String list of the split name
-    :param values: Values associated with the split
-    :param output_path: Path to output folder where figures will be stored
+    :param names: String list of the names
+    :param values: Values associated with the names
+    :param output_path: Output path (string)
+    :param x_axis: x-axis name
     :param y_axis: y-axis name
 
     Based on https://github.com/spinalcordtoolbox/disc-labeling-benchmark
     '''
             
     # Set position of bar on X axis
-    result_dict = {}
-    for i, split in enumerate(splits):
-        result_dict[split]=values[i]
+    result_dict = {'names':[], 'values':[]}
+    for i, name in enumerate(names):
+        result_dict['values'] += values[i]
+        for j in range(len(values[i])):
+            result_dict['names'] += [name] 
+    
     result_df = pd.DataFrame(data=result_dict)
 
-    # Make the plot 
-    plot = sns.violinplot(data=result_df)  
-    plot.set(xlabel='split', ylabel=y_axis)
-    plot.set(title=y_axis)
+    # Make the plot
+    plt.figure()
+    sns.violinplot(x="names", y="values", data=result_df)
+    plt.xlabel(x_axis, fontsize = 15)
+    plt.ylabel(y_axis, fontsize = 15)
+    plt.title(y_axis, fontsize = 20)
     
     # Save plot
-    plot.figure.savefig(output_path)
+    plt.savefig(output_path)
 
 
-def save_graphs(output_folder, metrics_dict):
+def save_hist(names, values, output_path, x_axis, y_axis):
+    '''
+    Create a histogram plot
+    :param names: String list of the names
+    :param values: Values associated with the names
+    :param output_path: Output path (string)
+    :param x_axis: x-axis name
+    :param y_axis: y-axis name
+
+    Based on https://github.com/spinalcordtoolbox/disc-labeling-benchmark
+    '''
+            
+    # Set position of bar on X axis
+    result_dict = {'names':[], 'values':[]}
+    for i, name in enumerate(names):
+        result_dict['values'] += values[i]
+        for j in range(len(values[i])):
+            result_dict['names'] += [name] 
+    
+    result_df = pd.DataFrame(data=result_dict)
+
+    # Make the plot
+    plt.figure()
+    sns.histplot(data=result_df, x="values", hue="names", multiple="dodge", binwidth=1/len(names))
+    plt.xlabel(x_axis, fontsize = 15)
+    plt.xticks(np.arange(1, np.max(result_dict['values'])+1))
+    plt.ylabel(x_axis, fontsize = 15)
+    plt.title(y_axis, fontsize = 20)
+    
+    # Save plot
+    plt.savefig(output_path)
+
+
+def save_pie(names, values, output_path, x_axis, y_axis):
+    '''
+    Create a pie chart plot
+    :param names: String list of the names
+    :param values: Values associated with the names
+    :param output_path: Output path (string)
+    :param x_axis: x-axis name
+    :param y_axis: y-axis name
+
+    Based on https://www.geeksforgeeks.org/how-to-create-a-pie-chart-in-seaborn/ 
+    '''
+    # Set position of bar on X axis
+    result_dict = {}
+    for i, name in enumerate(names):
+        result_dict[name] = {}
+        for val in values[i]:
+            if val not in result_dict[name].keys():
+                result_dict[name][val] = 1
+            else:
+                result_dict[name][val] += 1
+    
+    # define Seaborn color palette to use 
+    palette_color = sns.color_palette('bright')
+
+    def autopct_format(values):
+        '''
+        Based on https://stackoverflow.com/questions/53782591/how-to-display-actual-values-instead-of-percentages-on-my-pie-chart-using-matplo
+        '''
+        def my_format(pct):
+            total = sum(values)
+            val = int(round(pct*total)/100)
+            return '{v:d}'.format(v=val)
+        return my_format
+
+    # Make the plot
+    if len(names) == 1:
+        fig = plt.figure()
+        plt.pie(result_dict[names[0]].values(), labels=result_dict[names[0]].keys(), colors=palette_color, autopct=autopct_format(result_dict[names[0]].values()))
+        plt.title(y_axis, fontsize = 20)
+        plt.xlabel(x_axis, fontsize = 15)
+        plt.ylabel(y_axis, fontsize = 15)
+    else:
+        fig, axs = plt.subplots(1, len(names), figsize=(3*len(names),5))
+        fig.suptitle(y_axis)
+
+        for j, name in enumerate(result_dict.keys()):
+            axs[j].pie(result_dict[name].values(), labels=result_dict[name].keys(), colors=palette_color, autopct=autopct_format(result_dict[names[0]].values()))
+            axs[j].set_title(name)
+        
+        for ax, name in zip(axs.flat, names):
+            ax.set(xlabel=name, ylabel=y_axis)
+        
+    # Save plot
+    plt.savefig(output_path)
+
+
+def save_graphs(output_folder, metrics_dict, data_type='split'):
     '''
     Plot and save metrics into an output folder
 
     Based on https://github.com/spinalcordtoolbox/disc-labeling-benchmark
     '''
     # Extract subjects and metrics
-    splits = np.array(list(metrics_dict.keys()))
-    metrics_names = list(metrics_dict[splits[0]].keys())
+    data_name = np.array(list(metrics_dict.keys()))
+    metrics_names = list(metrics_dict[data_name[0]].keys())
 
     # Use violin plots
-    for metric in ['disc_list', 'nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']:
+    for metric in ['nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']:
         out_path = os.path.join(output_folder, f'{metric}.png')
-        save_violin(splits=splits, values=[metrics_dict[split][metric] for split in splits], output_path=out_path, y_axis=metric)
+        save_violin(names=data_name, values=[metrics_dict[name][metric] for name in data_name], output_path=out_path, x_axis=data_type, y_axis=metric)
+
+    # Use bar pie chart
+    for metric in ['orientation', 'contrast']:
+        out_path = os.path.join(output_folder, f'{metric}.png')
+        save_pie(names=data_name, values=[metrics_dict[name][metric] for name in data_name], output_path=out_path, x_axis=data_type, y_axis=metric)
 
     # Use bar graphs
-
-
+    for metric in ['discs_labels']:
+        out_path = os.path.join(output_folder, f'{metric}.png')
+        save_hist(names=data_name, values=[metrics_dict[name][metric] for name in data_name], output_path=out_path, x_axis=metric, y_axis='Count')
