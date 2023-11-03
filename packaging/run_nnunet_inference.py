@@ -11,8 +11,8 @@ from pathlib import Path
 from batchgenerators.utilities.file_and_folder_operations import join
 import time
 
-from nnunetv2.inference.predict_from_raw_data import predict_from_raw_data as predictor
-# from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
+# from nnunetv2.inference.predict_from_raw_data import predict_from_raw_data as predictor
+from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
 
 """
@@ -153,71 +153,73 @@ def main():
     # which is defined in OPTION 2. Hence, this method
     # ---------------------------------------------------------------
 
-    print('Starting inference...')
-    start = time.time()
-    # directly call the predict function
-    predictor(
-        list_of_lists_or_source_folder=path_data_tmp, 
-        output_folder=path_out,
-        model_training_output_dir=args.path_model,
-        use_folds=folds_avail,
-        tile_step_size=0.5,
-        use_gaussian=True,                                      # applies gaussian noise and gaussian blur
-        use_mirroring=True if args.use_mirroring else False,    # test time augmentation by mirroring on all axes
-        perform_everything_on_gpu=True if args.use_gpu else False,
-        device=torch.device('cuda', 0) if args.use_gpu else torch.device('cpu'),
-        verbose=False,
-        save_probabilities=False,
-        overwrite=True,
-        checkpoint_name='checkpoint_final.pth' if not args.use_best_checkpoint else 'checkpoint_best.pth',
-        num_processes_preprocessing=3,
-        num_processes_segmentation_export=3
-    )
-    end = time.time()
+    # print('Starting inference...')
+    # start = time.time()
+    # # directly call the predict function
+    # predictor(
+    #     list_of_lists_or_source_folder=path_data_tmp, 
+    #     output_folder=path_out,
+    #     model_training_output_dir=args.path_model,
+    #     use_folds=folds_avail,
+    #     tile_step_size=0.5,
+    #     use_gaussian=True,                                      # applies gaussian noise and gaussian blur
+    #     use_mirroring=True if args.use_mirroring else False,    # test time augmentation by mirroring on all axes
+    #     perform_everything_on_gpu=True if args.use_gpu else False,
+    #     device=torch.device('cuda', 0) if args.use_gpu else torch.device('cpu'),
+    #     verbose=False,
+    #     save_probabilities=False,
+    #     overwrite=True,
+    #     checkpoint_name='checkpoint_final.pth' if not args.use_best_checkpoint else 'checkpoint_best.pth',
+    #     num_processes_preprocessing=3,
+    #     num_processes_segmentation_export=3
+    # )
+    # end = time.time()
     
     # ---------------------------------------------------------------
     # OPTION 2
     # ---------------------------------------------------------------
 
+    print('Starting inference...')
+    start = time.time()
     # instantiate the nnUNetPredictor
-    # predictor = nnUNetPredictor(
-    #     tile_step_size=0.5,
-    #     use_gaussian=True,
-    #     use_mirroring=True,
-    #     perform_everything_on_gpu=True if args.use_gpu else False,
-    #     device=torch.device('cuda', 0) if args.use_gpu else torch.device('cpu'),
-    #     verbose=False,
-    #     verbose_preprocessing=False,
-    #     allow_tqdm=True
-    # )
-    # print('Running inference on device: {}'.format(predictor.device))
+    predictor = nnUNetPredictor(
+        tile_step_size=0.5,
+        use_gaussian=True,
+        use_mirroring=True,
+        perform_everything_on_gpu=True if args.use_gpu else False,
+        device=torch.device('cuda') if args.use_gpu else torch.device('cpu'),
+        verbose=False,
+        verbose_preprocessing=False,
+        allow_tqdm=True
+    )
+    print('Running inference on device: {}'.format(predictor.device))
 
-    # # initializes the network architecture, loads the checkpoint
-    # predictor.initialize_from_trained_model_folder(
-    #     join(args.path_model),
-    #     use_folds=(0, 1),   # 
-    #     checkpoint_name='checkpoint_final.pth',
-    # )
-    # print('Model loaded successfully. Fetching test data...')
+    # initializes the network architecture, loads the checkpoint
+    predictor.initialize_from_trained_model_folder(
+        join(args.path_model),
+        use_folds=folds_avail,
+        checkpoint_name='checkpoint_final.pth' if not args.use_best_checkpoint else 'checkpoint_best.pth',
+    )
+    print('Model loaded successfully. Fetching test data...')
 
-    # # variant 1: give input and output folders
-    # # adapted from: https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunetv2/inference
-    # if args.path_data is not None:
-    #     predictor.predict_from_files(path_data_tmp, path_out,
-    #                                 save_probabilities=False, overwrite=False,
-    #                                 num_processes_preprocessing=2, num_processes_segmentation_export=2,
-    #                                 folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
+    # variant 1: give input and output folders
+    # adapted from: https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunetv2/inference
+    if args.path_data is not None:
+        predictor.predict_from_files(path_data_tmp, path_out,
+                                    save_probabilities=False, overwrite=False,
+                                    num_processes_preprocessing=2, num_processes_segmentation_export=2,
+                                    folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
 
-    # # variant 2, use list of files as inputs. Note the usage of nested lists
-    # if args.path_image is not None:
-    #     # get absolute path to the image
-    #     args.path_image = Path(args.path_image).absolute()
+    # variant 2, use list of files as inputs. Note the usage of nested lists
+    if args.path_image is not None:
+        # get absolute path to the image
+        args.path_image = Path(args.path_image).absolute()
 
-    #     predictor.predict_from_list_of_files([[args.path_image]], args.path_out,
-    #                                          save_probabilities=False, overwrite=False,
-    #                                          num_processes_preprocessing=2, num_processes_segmentation_export=2,
-    #                                          folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
-
+        predictor.predict_from_list_of_files([[args.path_image]], args.path_out,
+                                             save_probabilities=False, overwrite=False,
+                                             num_processes_preprocessing=2, num_processes_segmentation_export=2,
+                                             folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
+    end = time.time()
     print('Inference done.')
 
     print('Deleting the temporary folder...')
