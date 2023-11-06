@@ -26,7 +26,7 @@ MedPy==0.4.0
 mpmath==1.2.1
 networkx==3.0
 nibabel==5.1.0
-nnunetv2==2.1
+nnunetv2==2.2
 numpy==1.24.1
 packaging==23.1
 pandas==2.0.2
