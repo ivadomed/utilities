@@ -204,18 +204,18 @@ def main():
 
     # variant 1: give input and output folders
     # adapted from: https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunetv2/inference
-    if args.path_data is not None:
+    if args.path_dataset is not None:
         predictor.predict_from_files(path_data_tmp, path_out,
                                     save_probabilities=False, overwrite=False,
                                     num_processes_preprocessing=2, num_processes_segmentation_export=2,
                                     folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
 
     # variant 2, use list of files as inputs. Note the usage of nested lists
-    if args.path_image is not None:
+    elif args.path_images is not None:
         # get absolute path to the image
-        args.path_image = Path(args.path_image).absolute()
+        args.path_images = Path(args.path_images).absolute()
 
-        predictor.predict_from_list_of_files([[args.path_image]], args.path_out,
+        predictor.predict_from_list_of_files([[args.path_images]], args.path_out,
                                              save_probabilities=False, overwrite=False,
                                              num_processes_preprocessing=2, num_processes_segmentation_export=2,
                                              folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
