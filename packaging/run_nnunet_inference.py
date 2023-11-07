@@ -111,6 +111,13 @@ def convert_filenames_to_nnunet_format(path_dataset):
 
 def main():
 
+    if 'nnUNet_raw' not in os.environ:
+        os.environ['nnUNet_raw'] = 'UNDEFINED'
+    if 'nnUNet_results' not in os.environ:
+        os.environ['nnUNet_results'] = 'UNDEFINED'
+    if 'nnUNet_preprocessed' not in os.environ:
+        os.environ['nnUNet_preprocessed'] = 'UNDEFINED'
+
     parser = get_parser()
     args = parser.parse_args()
 
