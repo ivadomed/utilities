@@ -12,6 +12,13 @@ from batchgenerators.utilities.file_and_folder_operations import join
 import time
 
 # from nnunetv2.inference.predict_from_raw_data import predict_from_raw_data as predictor
+# silence nnUNet
+if 'nnUNet_raw' not in os.environ:
+        os.environ['nnUNet_raw'] = 'UNDEFINED'
+if 'nnUNet_results' not in os.environ:
+        os.environ['nnUNet_results'] = 'UNDEFINED'
+if 'nnUNet_preprocessed' not in os.environ:
+        os.environ['nnUNet_preprocessed'] = 'UNDEFINED'
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
 
@@ -86,7 +93,7 @@ def add_suffix(fname, suffix):
     """
     stem, ext = splitext(fname)
     # we ommit the file extension because nnUNetPredictor takes care of it anyway
-    return os.path.join(stem + suffix)
+    return os.path.join(stem + suffix + ext)
 
 
 def convert_filenames_to_nnunet_format(path_dataset):
@@ -110,13 +117,6 @@ def convert_filenames_to_nnunet_format(path_dataset):
 
 
 def main():
-
-    if 'nnUNet_raw' not in os.environ:
-        os.environ['nnUNet_raw'] = 'UNDEFINED'
-    if 'nnUNet_results' not in os.environ:
-        os.environ['nnUNet_results'] = 'UNDEFINED'
-    if 'nnUNet_preprocessed' not in os.environ:
-        os.environ['nnUNet_preprocessed'] = 'UNDEFINED'
 
     parser = get_parser()
     args = parser.parse_args()
@@ -155,6 +155,8 @@ def main():
         # # add suffix '_pred' to predicted images
         for f in args.path_images:
             fname = Path(f).name
+            # strip ALL suffixes
+            fname = fname.rstrip(''.join(Path(fname).suffixes))
             path_pred = os.path.join(args.path_out, add_suffix(fname, '_pred')) 
             path_out.append(path_pred)
         print(path_out)
