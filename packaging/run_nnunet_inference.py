@@ -119,7 +119,9 @@ def main():
     if args.path_dataset is not None and args.path_images is not None:
         raise ValueError('You can only specify either --path-dataset or --path-images (not both). See --help for more info.')
     
+    inference_mode = None
     if args.path_dataset is not None:
+        inference_mode = 'dataset'
         print('Found a dataset folder. Running inference on the whole dataset...')
 
         # NOTE: nnUNet only wants the _0000 suffix for files contained in a folder (i.e. when inference is run on a whole dataset)
@@ -132,12 +134,12 @@ def main():
         path_out = args.path_out
 
     elif args.path_images is not None:
+        inference_mode = 'images'
         # NOTE: for individual images, the _0000 suffix is not needed. BUT, the images should be in a list of lists
         # get list of images from input argument
         print(f'Found {len(args.path_images)} images. Running inference on them...')
         # path_data_tmp = [[os.path.basename(f)] for f in args.path_images]
         path_data_tmp = [[f] for f in args.path_images]
-        print(path_data_tmp)
 
         path_out = args.path_out
         # # add suffix '_pred' to predicted images
@@ -202,23 +204,37 @@ def main():
     )
     print('Model loaded successfully. Fetching test data...')
 
-    # variant 1: give input and output folders
-    # adapted from: https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunetv2/inference
-    if args.path_dataset is not None:
-        predictor.predict_from_files(path_data_tmp, path_out,
-                                    save_probabilities=False, overwrite=False,
-                                    num_processes_preprocessing=2, num_processes_segmentation_export=2,
-                                    folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
+    match inference_mode:
+        case 'dataset':
+            # variant 1: give input and output folders
+            # adapted from: https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunetv2/inference
+            predictor.predict_from_files(
+                path_data_tmp, 
+                path_out,
+                save_probabilities=False,
+                overwrite=False,
+                num_processes_preprocessing=2, 
+                num_processes_segmentation_export=2,
+                folder_with_segs_from_prev_stage=None, 
+                num_parts=1, 
+                part_id=0
+            )
+        case 'images':
+            # variant 2, use list of files as inputs. Note the usage of nested lists
+            # get absolute path to the image
+            args.path_images = Path(args.path_images).absolute()
 
-    # variant 2, use list of files as inputs. Note the usage of nested lists
-    elif args.path_images is not None:
-        # get absolute path to the image
-        args.path_images = Path(args.path_images).absolute()
-
-        predictor.predict_from_list_of_files([[args.path_images]], args.path_out,
-                                             save_probabilities=False, overwrite=False,
-                                             num_processes_preprocessing=2, num_processes_segmentation_export=2,
-                                             folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
+            predictor.predict_from_list_of_files(
+                [[args.path_images]], 
+                args.path_out,
+                save_probabilities=False, 
+                overwrite=False,
+                num_processes_preprocessing=2, 
+                num_processes_segmentation_export=2,
+                folder_with_segs_from_prev_stage=None, 
+                num_parts=1, 
+                part_id=0
+            )
     end = time.time()
     print('Inference done.')
 
