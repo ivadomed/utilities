@@ -96,7 +96,7 @@ def convert_filenames_to_nnunet_format(path_dataset):
         os.makedirs(path_tmp, exist_ok=True)
 
     for f in os.listdir(path_dataset):
-        if f.endswith('.nii.gz'):
+        if f.endswith('.nii.gz') or f.endswith('.png'):
             # get absolute path to the image
             f = os.path.join(path_dataset, f)
             # add suffix
