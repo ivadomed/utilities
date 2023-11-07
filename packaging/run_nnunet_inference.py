@@ -129,7 +129,6 @@ def main():
     
     inference_mode = None
     if args.path_dataset is not None:
-        inference_mode = 'dataset'
         print('Found a dataset folder. Running inference on the whole dataset...')
 
         # NOTE: nnUNet only wants the _0000 suffix for files contained in a folder (i.e. when inference is run on a whole dataset)
@@ -142,7 +141,6 @@ def main():
         path_out = args.path_out
 
     elif args.path_images is not None:
-        inference_mode = 'images'
         # NOTE: for individual images, the _0000 suffix is not needed. 
         # BUT, the input images should be in a nested list, and the output paths in a list.
         # get list of images from input argument
