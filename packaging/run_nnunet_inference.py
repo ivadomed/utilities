@@ -85,6 +85,7 @@ def add_suffix(fname, suffix):
     - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
     stem, ext = splitext(fname)
+    # we ommit the file extension because nnUNetPredictor takes care of it anyway
     return os.path.join(stem + suffix)
 
 
