@@ -126,7 +126,6 @@ def main():
     if args.path_dataset is not None and args.path_images is not None:
         raise ValueError('You can only specify either --path-dataset or --path-images (not both). See --help for more info.')
     
-    inference_mode = None
     if args.path_dataset is not None:
         print('Found a dataset folder. Running inference on the whole dataset...')
 
