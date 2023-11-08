@@ -12,6 +12,13 @@ from batchgenerators.utilities.file_and_folder_operations import join
 import time
 
 # from nnunetv2.inference.predict_from_raw_data import predict_from_raw_data as predictor
+# silence nnUNet
+if 'nnUNet_raw' not in os.environ:
+        os.environ['nnUNet_raw'] = 'UNDEFINED'
+if 'nnUNet_results' not in os.environ:
+        os.environ['nnUNet_results'] = 'UNDEFINED'
+if 'nnUNet_preprocessed' not in os.environ:
+        os.environ['nnUNet_preprocessed'] = 'UNDEFINED'
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
 
@@ -96,7 +103,7 @@ def convert_filenames_to_nnunet_format(path_dataset):
         os.makedirs(path_tmp, exist_ok=True)
 
     for f in os.listdir(path_dataset):
-        if f.endswith('.nii.gz'):
+        if f.endswith('.nii.gz') or f.endswith('.png'):
             # get absolute path to the image
             f = os.path.join(path_dataset, f)
             # add suffix
@@ -132,18 +139,23 @@ def main():
         path_out = args.path_out
 
     elif args.path_images is not None:
-        # NOTE: for individual images, the _0000 suffix is not needed. BUT, the images should be in a list of lists
+        # NOTE: for individual images, the _0000 suffix is not needed. 
+        # BUT, the input images should be in a nested list, and the output paths in a list.
         # get list of images from input argument
         print(f'Found {len(args.path_images)} images. Running inference on them...')
         # path_data_tmp = [[os.path.basename(f)] for f in args.path_images]
         path_data_tmp = [[f] for f in args.path_images]
         print(path_data_tmp)
 
-        path_out = args.path_out
+        path_out = []
         # # add suffix '_pred' to predicted images
-        # for f in args.path_images:
-        #     path_pred = os.path.join(args.path_out, add_suffix(f, '_pred')) 
-        #     path_out.append(path_pred)
+        for f in args.path_images:
+            fname = Path(f).name
+            # strip ALL suffixes
+            fname = fname.rstrip(''.join(Path(fname).suffixes))
+            path_pred = os.path.join(args.path_out, add_suffix(fname, '_pred')) 
+            path_out.append(path_pred)
+        print(path_out)
 
     # uses all the folds available in the model folder by default
     folds_avail = [int(f.split('_')[-1]) for f in os.listdir(args.path_model) if f.startswith('fold_')]
@@ -202,23 +214,17 @@ def main():
     )
     print('Model loaded successfully. Fetching test data...')
 
-    # variant 1: give input and output folders
-    # adapted from: https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunetv2/inference
-    if args.path_dataset is not None:
-        predictor.predict_from_files(path_data_tmp, path_out,
-                                    save_probabilities=False, overwrite=False,
-                                    num_processes_preprocessing=2, num_processes_segmentation_export=2,
-                                    folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
-
-    # variant 2, use list of files as inputs. Note the usage of nested lists
-    elif args.path_images is not None:
-        # get absolute path to the image
-        args.path_images = Path(args.path_images).absolute()
-
-        predictor.predict_from_list_of_files([[args.path_images]], args.path_out,
-                                             save_probabilities=False, overwrite=False,
-                                             num_processes_preprocessing=2, num_processes_segmentation_export=2,
-                                             folder_with_segs_from_prev_stage=None, num_parts=1, part_id=0)
+    predictor.predict_from_files(
+        path_data_tmp, 
+        path_out,
+        save_probabilities=False, 
+        overwrite=False,
+        num_processes_preprocessing=2, 
+        num_processes_segmentation_export=2,
+        folder_with_segs_from_prev_stage=None, 
+        num_parts=1, 
+        part_id=0
+    )
     end = time.time()
     print('Inference done.')
 
