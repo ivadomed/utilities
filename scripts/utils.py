@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import glob
 
 from image import Image
 
@@ -15,7 +16,7 @@ CONTRAST = {'t1': ['T1w'],
             't1_t2': ['T1w', 'T2w']}
 
 ## Functions
-def get_img_path_from_mask_path(str_path):
+def get_img_path_from_mask_path(str_path, derivatives_folder='derivatives'):
     """
     This function does 2 things: ⚠️ Files need to be stored in a BIDS compliant dataset
         - Step 1: Remove label suffix (e.g. "_labels-disc-manual"). The suffix is always between the MRI contrast and the file extension.
@@ -38,7 +39,7 @@ def get_img_path_from_mask_path(str_path):
     dir_list = str(path.parent).split('/')
 
     # Remove "derivatives" and "labels" folders
-    derivatives_idx = dir_list.index('derivatives')
+    derivatives_idx = dir_list.index(derivatives_folder)
     dir_path = '/'.join(dir_list[0:derivatives_idx] + dir_list[derivatives_idx+2:])
 
     # Recreate img path
@@ -47,37 +48,60 @@ def get_img_path_from_mask_path(str_path):
     return img_path
     
 ##
-def get_mask_path_from_img_path(img_path, suffix='_seg', derivatives_path='/derivatives/labels'):
+def get_mask_path_from_img_path(img_path, deriv_sub_folders, short_suffix='_seg', ext='.nii.gz', counterexample=[]):
     """
-    This function returns the mask path from an image path. Images need to be stored in a BIDS compliant dataset.
+    This function returns the mask path from an image path or an empty string if the path does not exists. Images need to be stored in a BIDS compliant dataset.
 
     :param img_path: String path to niftii image
     :param suffix: Mask suffix
-    :param derivatives_path: Relative path to derivatives folder where labels are stored (e.i. '/derivatives/labels')
+    :param ext: File extension
+
     Based on https://github.com/spinalcordtoolbox/disc-labeling-benchmark
     """
     # Extract information from path
-    subjectID, sessionID, filename, contrast, echoID = fetch_subject_and_session(img_path)
+    subjectID, sessionID, filename, contrast, echoID, acq = fetch_subject_and_session(img_path)
 
-    # Extract file extension
-    path_obj = Path(img_path)
-    ext = ''.join(path_obj.suffixes)
+    # Find corresponding mask
+    mask_path = []
+    for deriv_path in deriv_sub_folders:
+        if counterexample: # Deal with counter examples
+            paths = []
+            for path in glob.glob(deriv_path + filename.split(ext)[0] + short_suffix + "*" + ext):
+                iswrong = False
+                for c in counterexample:
+                    if c in path:
+                        iswrong = True
+                if not iswrong:
+                    paths.append(path)
+        else:
+            paths = glob.glob(deriv_path + filename.split(ext)[0] + short_suffix + "*" + ext)
 
-    # Create mask name
-    mask_name = path_obj.name.split('.')[0] + suffix + ext
-
-    # Split path using "/" (TODO: check if it works for windows users)
-    path_list = img_path.split('/')
-
-    # Extract subject folder index
-    sub_folder_idx = path_list.index(subjectID)
-
-    # Reconstruct mask_path
-    mask_path = os.path.join('/'.join(path_list[:sub_folder_idx]), derivatives_path, path_list[sub_folder_idx:-1], mask_name)
+        if len(paths) > 1:
+            print(f'Image {img_path} has multiple masks\n: {'\n'.join(paths)}')
+        elif len(paths) == 1:
+            mask_path.append(paths[0])
     return mask_path
 
+def get_deriv_sub_from_img_path(img_path, derivatives_folder='derivatives'):
+    """
+    This function returns the derivatives path of the subject from an image path or an empty string if the path does not exists. Images need to be stored in a BIDS compliant dataset.
+
+    :param img_path: String path to niftii image
+    :param derivatives_folder: List of derivatives paths
+    :param ext: File extension
+    """
+    # Extract information from path
+    subjectID, sessionID, filename, contrast, echoID, acq = fetch_subject_and_session(img_path)
+    path_bids, path_sub_folder = img_path.split(subjectID)[0:-1]
+    path_sub_folder = subjectID + path_sub_folder
+
+    # Find corresponding mask
+    deriv_sub_folder = glob.glob(path_bids + "**/" + derivatives_folder + "/**/" + path_sub_folder, recursive=True)
+
+    return deriv_sub_folder
+
 ##
-def change_mask_suffix(mask_path, new_suffix='_seg'):
+def change_mask_suffix(mask_path, short_suffix='_seg', ext='.nii.gz'):
     """
     This function replace the current suffix with a new suffix suffix. If path is specified, make sure the dataset is BIDS compliant.
 
@@ -85,14 +109,33 @@ def change_mask_suffix(mask_path, new_suffix='_seg'):
     :param new_suffix: New mask suffix
     Based on https://github.com/spinalcordtoolbox/disc-labeling-benchmark
     """
+    # Extract information from path
+    subjectID, sessionID, filename, contrast, echoID, acq = fetch_subject_and_session(mask_path)
+    path_deriv_sub = mask_path.split(filename)[0]
 
-    # Extract file extension
-    ext = ''.join(Path(mask_path).suffixes)
+    # Find corresponding new_mask
+    new_mask_path = glob.glob(path_deriv_sub + '_'.join(filename.split('_')[:-1]) + short_suffix + "*" + ext)
 
-    # Change mask path
-    new_mask_path = '_'.join(mask_path.split('_')[:-1]) + new_suffix + ext
+    if len(new_mask_path) > 1:
+        print(f'Multiple {short_suffix} masks for subject {subjectID} \n: {'\n'.join(new_mask_path)}')
+        mask_path = ''
+    elif len(new_mask_path) == 1:
+        new_mask_path = new_mask_path[0]
+    else: # mask does not exist
+        new_mask_path = ''
+
     return new_mask_path
 
+
+def list_suffixes(folder_path, ext='.nii.gz'):
+    """
+    This function return all the labels suffixes. If path is specified, make sure the dataset is BIDS compliant.
+
+    :param folder_path: Path to folder where labels are stored.
+    """
+    files = [file for file in os.listdir(folder_path) if file.endswith(ext)]
+    suffixes = ['_'+file.split('_')[-1].split(ext)[0] for file in files]
+    return suffixes
 ##
 def fetch_subject_and_session(filename_path):
     """
@@ -139,59 +182,185 @@ def fetch_contrast(filename_path):
     '''
     return filename_path.rstrip(''.join(Path(filename_path).suffixes)).split('_')[-1]
 
+def str_to_str_list(string):
+    string = string[1:-1] # remove brackets
+    return [s[1:-1] for s in string.split(', ')]
 
-def edit_metric_dict(metrics_dict, img_path, mask_path, discs_mask_path):
+def str_to_float_list(string):
+    string = string[1:-1] # remove brackets
+    return [float(s) for s in string.split(', ')]
+
+
+def edit_metric_dict(metrics_dict, fprint_dict, img_path, seg_paths, discs_paths, deriv_sub_folders):
     '''
     This function extracts information and metadata from an image and its mask. Values are then
     gathered inside a dictionary.
 
-    :param metrics_dict: dictionary where information will be gathered
+    :param metrics_dict: dictionary containing summary metadata
+    :param fprint_dict: dictionary containing all the informations
     :param img_path: niftii image path
-    :param discs_mask_path: corresponding niftii discs mask path
+    :param seg_path: corresponding niftii spinal cord segmentation path
+    :param discs_path: corresponding niftii discs mask path
 
     Based on https://github.com/spinalcordtoolbox/disc-labeling-benchmark
     '''
     #-----------------------------------------------------------------------#
     #----------------------- Extracting metadata ---------------------------#
     #-----------------------------------------------------------------------#
-
-    if os.path.exists(discs_mask_path): # TODO: deal with datasets with no discs labels
-        discs_mask = Image(discs_mask_path)
-        discs_labels = [list(coord)[-1] for coord in discs_mask.getNonZeroCoordinates(sorting='value')]
-    else:
-        discs_labels = []
-    
     # Extract original image orientation 
     img = Image(img_path)
     orientation = img.orientation
 
+    # Extract information from path
+    subjectID, sessionID, filename, c, echoID, acq = fetch_subject_and_session(img_path)
+
     # Extract image dimensions and resolutions
     img_RPI = img.change_orientation("RPI")
     nx, ny, nz, nt, px, py, pz, pt = img_RPI.dim
+    
+    # Extract discs + check for shape mismatch between discs labels and image
+    discs_labels = []
+    count_discs = 0
+    if discs_paths:
+        for path in discs_paths:
+            discs_mask = Image(path).change_orientation("RPI")
+            discs_labels += [list(coord)[-1] for coord in discs_mask.getNonZeroCoordinates(sorting='value')]
+            if img_RPI.data.shape != discs_mask.data.shape:
+                count_discs += 1
 
-    # Check for shape mismatch between mask and image
-    if img.data.shape != Image(mask_path).data.shape:
-        shape_mismatch = True
-    else:
-        shape_mismatch = False
+    # Check for shape mismatch between segmentation and image
+    count_seg = 0
+    if seg_paths:
+        for path in seg_paths:
+            if img_RPI.data.shape != Image(path).change_orientation("RPI").data.shape:
+                count_seg += 1
+
+    # Compute image size
+    X, Y, Z = nx*px, ny*py, nz*pz
 
     # Extract MRI contrast
     contrast = fetch_contrast(img_path)
 
-    #-----------------------------------------------------------------------#
-    #--------------------- Adding metadata to dict -------------------------#
-    #-----------------------------------------------------------------------#
-    list_of_metrics = [img_path, orientation, contrast, discs_labels, shape_mismatch, nx, ny, nz, nt, px, py, pz, pt]
-    list_of_keys = ['img_path', 'orientation', 'contrast', 'discs_labels', 'shape_mismatch', 'nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']
-    for key, metric in zip(list_of_keys, list_of_metrics):
-        if not isinstance(metric, list):
-            metric = [metric]
-        if key not in metrics_dict.keys():
-            metrics_dict[key] = metric
-        else:
-            metrics_dict[key] += metric
+    # Extract suffixes
+    suffixes = []
+    for path in deriv_sub_folders:
+        for suf in list_suffixes(path):
+            if not suf in suffixes:
+                suffixes.append(suf)
     
-    return metrics_dict
+    # Extract derivatives folder
+    der_folders = []
+    for path in deriv_sub_folders:
+        der_folders.append(os.path.basename(os.path.dirname(path.split(subjectID)[0])))
+
+    #-------------------------------------------------------------------------------#
+    #--------------------- Adding metadata to summary dict -------------------------#
+    #-------------------------------------------------------------------------------#
+    list_of_metrics = [orientation, contrast, X, Y, Z, nx, ny, nz, nt, px, py, pz, pt]
+    list_of_keys = ['orientation', 'contrast', 'X', 'Y', 'Z', 'nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']
+    for key, metric in zip(list_of_keys, list_of_metrics):
+        if not isinstance(metric,str):
+            metric = str(metric)
+        if key not in metrics_dict.keys():
+            metrics_dict[key] = {metric:1}
+        else:
+            if metric not in metrics_dict[key].keys():
+                metrics_dict[key][metric] = 1
+            else:
+                metrics_dict[key][metric] += 1
+
+    # Add count shape mismatch
+    key_mis_seg = 'mismatch-seg'
+    if key_mis_seg not in metrics_dict.keys():
+        metrics_dict[key_mis_seg] = count_seg
+    else:
+        metrics_dict[key_mis_seg] += count_seg
+
+    key_mis_disc = 'mismatch-disc'
+    if key_mis_disc not in metrics_dict.keys():
+        metrics_dict[key_mis_disc] = count_discs
+    else:
+        metrics_dict[key_mis_disc] += count_discs
+
+    # Add discs labels
+    key_discs = 'discs-labels'
+    if discs_labels:
+        if key_discs not in metrics_dict.keys():
+            metrics_dict[key_discs] = {}
+        for disc in discs_labels:
+            disc = str(disc)
+            if disc not in metrics_dict[key_discs].keys():
+                metrics_dict[key_discs][disc] = 1
+            else:
+                metrics_dict[key_discs][disc] += 1
+
+    # Add suffixes
+    suf_key = 'suffixes'
+    if suf_key not in metrics_dict.keys():
+        metrics_dict[suf_key] = suffixes
+    else:
+        for suf in suffixes:
+            if not suf in metrics_dict[suf_key]:
+                metrics_dict[suf_key].append(suf)
+    
+    # Add derivatives folders
+    der_key = 'derivatives'
+    if der_key not in metrics_dict.keys():
+        metrics_dict[der_key] = der_folders
+    else:
+        for der in der_folders:
+            if not der in metrics_dict[der_key]:
+                metrics_dict[der_key].append(der)
+    
+    #--------------------------------------------------------------------------------#
+    #--------------------- Storing metadata to exhaustive dict -------------------------#
+    #--------------------------------------------------------------------------------#
+    fprint_dict[filename] = {}
+
+    # Add contrast
+    fprint_dict[filename]['contrast'] = contrast
+    
+    # Add orientation
+    fprint_dict[filename]['img_orientation'] = orientation
+
+    # Add info SC segmentations
+    if seg_paths:
+        fprint_dict[filename]['seg-sc'] = True
+        suf_seg = ['_' + path.split('_')[-1].split('.')[0] for path in seg_paths]
+        fprint_dict[filename]['seg-suffix'] = '/'.join(suf_seg)
+        fprint_dict[filename]['seg-mismatch'] = count_seg
+    else:
+        fprint_dict[filename]['seg-sc'] = False
+        fprint_dict[filename]['seg-suffix'] = ''
+        fprint_dict[filename]['seg-mismatch'] = count_seg
+    
+    # Add info discs labels
+    if discs_paths:
+        fprint_dict[filename]['discs-label'] = True
+        suf_discs = ['_' + path.split('_')[-1].split('.')[0] for path in discs_paths]
+        fprint_dict[filename]['discs-suffix'] = '/'.join(suf_discs)
+        fprint_dict[filename]['discs-mismatch'] = count_discs
+    else:
+        fprint_dict[filename]['discs-label'] = False
+        fprint_dict[filename]['discs-suffix'] = ''
+        fprint_dict[filename]['discs-mismatch'] = count_discs
+
+    # Add discs labels
+    key_discs = 'discs-labels'
+    label_list = np.arange(1,27).tolist() + [49, 50, 60]
+    for num_label in label_list:
+        if num_label in discs_labels:
+            fprint_dict[filename][f'label_{str(num_label)}'] = True
+        else:
+            fprint_dict[filename][f'label_{str(num_label)}'] = False
+    
+    # Add dim and resolutions
+    list_of_metrics = [X, Y, Z, nx, ny, nz, nt, px, py, pz, pt]
+    list_of_keys = ['X', 'Y', 'Z', 'nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']
+    for key, metric in zip(list_of_keys, list_of_metrics):
+        fprint_dict[filename][key] = metric
+
+    return metrics_dict, fprint_dict
 
 
 def save_violin(names, values, output_path, x_axis, y_axis):
@@ -248,8 +417,10 @@ def save_hist(names, values, output_path, x_axis, y_axis):
     result_df = pd.DataFrame(data=result_dict)
 
     # Make the plot
-    plt.figure()
-    sns.histplot(data=result_df, x="values", hue="names", multiple="dodge", binwidth=1/len(names))
+    binwidth= 1/(1*len(names)) if len(names) > 1 else 1/3
+    shrink = 1 if len(names) > 1 else 0.7
+    plt.figure(figsize=(np.max(result_dict['values']), 8))
+    sns.histplot(data=result_df, x="values", hue="names", multiple="dodge", binwidth=binwidth, shrink=shrink)
     plt.xlabel(x_axis, fontsize = 15)
     plt.xticks(np.arange(1, np.max(result_dict['values'])+1))
     plt.ylabel(x_axis, fontsize = 15)
@@ -298,24 +469,40 @@ def save_pie(names, values, output_path, x_axis, y_axis):
         fig = plt.figure()
         plt.pie(result_dict[names[0]].values(), labels=result_dict[names[0]].keys(), colors=palette_color, autopct=autopct_format(result_dict[names[0]].values()))
         plt.title(y_axis, fontsize = 20)
-        plt.xlabel(x_axis, fontsize = 15)
+        plt.xlabel(names[0], fontsize = 15)
         plt.ylabel(y_axis, fontsize = 15)
     else:
         fig, axs = plt.subplots(1, len(names), figsize=(3*len(names),5))
-        fig.suptitle(y_axis)
+        fig.suptitle(y_axis, fontsize = 8*len(names))
 
         for j, name in enumerate(result_dict.keys()):
-            axs[j].pie(result_dict[name].values(), labels=result_dict[name].keys(), colors=palette_color, autopct=autopct_format(result_dict[names[0]].values()))
+            axs[j].pie(result_dict[name].values(), labels=result_dict[name].keys(), colors=palette_color, autopct=autopct_format(result_dict[names[j]].values()))
             axs[j].set_title(name)
-        
-        for ax, name in zip(axs.flat, names):
-            ax.set(xlabel=name, ylabel=y_axis)
+
+        axs[0].set(ylabel=y_axis)
         
     # Save plot
     plt.savefig(output_path)
 
+def convert_dict_to_float_list(dic):
+    """
+    This function converts dictionary with {str(value):int(nb_occurence)} to a list [float(value)]*nb_occurence
+    """
+    out_list = []
+    for value, count in dic.items():
+        out_list += [float(value)]*count
+    return out_list
 
-def save_graphs(output_folder, metrics_dict, data_type='split'):
+def convert_dict_to_list(dic):
+    """
+    This function converts dictionary with {str(value):int(nb_occurence)} to a list [str(value)]*nb_occurence
+    """
+    out_list = []
+    for value, count in dic.items():
+        out_list += [value]*count
+    return out_list
+
+def save_graphs(output_folder, metrics_dict, data_form='split'):
     '''
     Plot and save metrics into an output folder
 
@@ -323,19 +510,23 @@ def save_graphs(output_folder, metrics_dict, data_type='split'):
     '''
     # Extract subjects and metrics
     data_name = np.array(list(metrics_dict.keys()))
-    metrics_names = list(metrics_dict[data_name[0]].keys())
 
     # Use violin plots
-    for metric in ['nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt']:
+    for metric, unit in zip(['nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt', 'X', 'Y', 'Z'], ['pixel', 'pixel', 'pixel', '', 'mm/pixel', 'mm/pixel', 'mm/pixel', '', 'mm', 'mm', 'mm']):
         out_path = os.path.join(output_folder, f'{metric}.png')
-        save_violin(names=data_name, values=[metrics_dict[name][metric] for name in data_name], output_path=out_path, x_axis=data_type, y_axis=metric)
+        metric_name = metric + ' ' + f'({unit})'
+        save_violin(names=data_name, values=[convert_dict_to_float_list(metrics_dict[name][metric]) for name in data_name], output_path=out_path, x_axis=data_form, y_axis=metric_name)
 
     # Use bar pie chart
     for metric in ['orientation', 'contrast']:
         out_path = os.path.join(output_folder, f'{metric}.png')
-        save_pie(names=data_name, values=[metrics_dict[name][metric] for name in data_name], output_path=out_path, x_axis=data_type, y_axis=metric)
+        save_pie(names=data_name, values=[convert_dict_to_list(metrics_dict[name][metric]) for name in data_name], output_path=out_path, x_axis=data_form, y_axis=metric)
 
     # Use bar graphs
-    for metric in ['discs_labels']:
+    for metric in ['discs-labels']:
         out_path = os.path.join(output_folder, f'{metric}.png')
-        save_hist(names=data_name, values=[metrics_dict[name][metric] for name in data_name], output_path=out_path, x_axis=metric, y_axis='Count')
+        save_hist(names=data_name, values=[convert_dict_to_float_list(metrics_dict[name][metric]) for name in data_name], output_path=out_path, x_axis=metric, y_axis='Count')
+
+def mergedict(a,b):
+    a.update(b)
+    return a
