@@ -94,7 +94,7 @@ def run_analysis(args):
                     img_path = path # str
                     deriv_sub_folders = get_deriv_sub_from_img_path(img_path=img_path, derivatives_folder=derivatives_folder) # list of str
                     seg_paths = get_mask_path_from_img_path(img_path, short_suffix=short_suffix_seg, deriv_sub_folders=deriv_sub_folders) # list of str
-                    discs_paths = get_mask_path_from_img_path(img_path, short_suffix=short_suffix_disc, deriv_sub_folders=deriv_sub_folders, counterexample=['compression', 'SC_mask']) # list of str
+                    discs_paths = get_mask_path_from_img_path(img_path, short_suffix=short_suffix_disc, deriv_sub_folders=deriv_sub_folders, counterexample=['compression', 'SC_mask', 'seg']) # list of str
                 else:
                     img_path = get_img_path_from_mask_path(path, derivatives_folder=derivatives_folder)
                     deriv_sub_folders = [os.path.dirname(path)]
