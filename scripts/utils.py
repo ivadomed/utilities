@@ -74,7 +74,7 @@ def get_mask_path_from_img_path(img_path, deriv_sub_folders, short_suffix='_seg'
                 if not iswrong:
                     paths.append(path)
         else:
-            paths = glob.glob(deriv_path + filename.split(ext)[0] + short_suffix + "*" + ext)
+            paths = glob.glob(deriv_path + filename.split(ext)[0] + "*" + short_suffix + "*" + ext)
 
         if len(paths) > 1:
             print(f'Image {img_path} has multiple masks\n: {'\n'.join(paths)}')
@@ -127,14 +127,25 @@ def change_mask_suffix(mask_path, short_suffix='_seg', ext='.nii.gz'):
     return new_mask_path
 
 
-def list_suffixes(folder_path, ext='.nii.gz'):
+def list_der_suffixes(folder_path, ext='.nii.gz'):
     """
     This function return all the labels suffixes. If path is specified, make sure the dataset is BIDS compliant.
 
     :param folder_path: Path to folder where labels are stored.
     """
+    folder_path = os.path.normpath(folder_path) 
     files = [file for file in os.listdir(folder_path) if file.endswith(ext)]
-    suffixes = ['_'+file.split('_')[-1].split(ext)[0] for file in files]
+    suffixes = []
+    for file in files:
+        subjectID, sessionID, filename, contrast, echoID, acquisition = fetch_subject_and_session(file)
+        split_file = file.split(ext)[0].split('_')
+        skip_idx = 0
+        for sp in [subjectID, sessionID, echoID, acquisition]:
+            if sp:
+                skip_idx = skip_idx + 1
+        suffix = '_' + '_'.join(split_file[skip_idx+1:]) # +1 to skip contrast
+        if not suffix =='_':
+            suffixes.append(suffix)
     return suffixes
 ##
 def fetch_subject_and_session(filename_path):
@@ -175,7 +186,7 @@ def fetch_subject_and_session(filename_path):
 
 def fetch_contrast(filename_path):
     '''
-    Extract MRI contrast from a BIDS-compatible filename/filepath
+    Extract MRI contrast from a BIDS-compatible IMAGE filename/filepath
     The function handles images only.
     :param filename_path: image file path or file name. (e.g sub-001_ses-01_T1w.nii.gz)
     Copied from https://github.com/spinalcordtoolbox/disc-labeling-hourglass
@@ -238,13 +249,13 @@ def edit_metric_dict(metrics_dict, fprint_dict, img_path, seg_paths, discs_paths
     # Compute image size
     X, Y, Z = nx*px, ny*py, nz*pz
 
-    # Extract MRI contrast
+    # Extract MRI contrast from image only
     contrast = fetch_contrast(img_path)
 
     # Extract suffixes
     suffixes = []
     for path in deriv_sub_folders:
-        for suf in list_suffixes(path):
+        for suf in list_der_suffixes(path):
             if not suf in suffixes:
                 suffixes.append(suf)
     
@@ -326,7 +337,7 @@ def edit_metric_dict(metrics_dict, fprint_dict, img_path, seg_paths, discs_paths
     # Add info SC segmentations
     if seg_paths:
         fprint_dict[filename]['seg-sc'] = True
-        suf_seg = ['_' + path.split('_')[-1].split('.')[0] for path in seg_paths]
+        suf_seg = [path.split(contrast)[-1].split('.')[0] for path in seg_paths]
         fprint_dict[filename]['seg-suffix'] = '/'.join(suf_seg)
         fprint_dict[filename]['seg-mismatch'] = count_seg
     else:
@@ -337,7 +348,7 @@ def edit_metric_dict(metrics_dict, fprint_dict, img_path, seg_paths, discs_paths
     # Add info discs labels
     if discs_paths:
         fprint_dict[filename]['discs-label'] = True
-        suf_discs = ['_' + path.split('_')[-1].split('.')[0] for path in discs_paths]
+        suf_discs = [path.split(contrast)[-1].split('.')[0] for path in discs_paths]
         fprint_dict[filename]['discs-suffix'] = '/'.join(suf_discs)
         fprint_dict[filename]['discs-mismatch'] = count_discs
     else:
