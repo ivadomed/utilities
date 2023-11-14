@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
+import math
 
 from image import Image
 
@@ -378,7 +379,7 @@ def save_violin(names, values, output_path, x_axis, y_axis):
     '''
     Create a violin plot
     :param names: String list of the names
-    :param values: Values associated with the names
+    :param values: List of values associated with the names
     :param output_path: Output path (string)
     :param x_axis: x-axis name
     :param y_axis: y-axis name
@@ -527,7 +528,7 @@ def save_pie(names, values, output_path, x_axis, y_axis):
         plt.pie(result_dict[names[0]].values(), labels=result_dict[names[0]].keys(), colors=palette_color, autopct=autopct_format(result_dict[names[0]].values()))
         plt.title(y_axis, fontsize = 20)
         plt.xlabel(names[0], fontsize = 15)
-        plt.ylabel(y_axis, fontsize = 15)
+        #plt.ylabel(y_axis, fontsize = 15)
     else:
         fig, axs = plt.subplots(1, len(names), figsize=(3*len(names),5))
         fig.suptitle(y_axis, fontsize = 8*len(names))
