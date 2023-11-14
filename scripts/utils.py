@@ -406,6 +406,40 @@ def save_violin(names, values, output_path, x_axis, y_axis):
     plt.savefig(output_path)
 
 
+def save_group_violins(name, values, output_path, x_axis, y_axis):
+    '''
+    Create a violin plot
+    :param name: Dataset name
+    :param values: List of metrics containing lists of values associated with the names
+    :param output_path: Output path (string)
+    :param x_axis: x-axis name
+    :param y_axis: List of y-axis name corresponding to each metrics
+    '''
+    
+    # Create plot 
+    fig, axs = plt.subplots(3, len(values)//3 + 1, figsize=(1.8*len(values),11))
+
+    fig.suptitle(f'{x_axis} : {name}', fontsize = 30)
+    
+    for idx_line, val in enumerate(values):
+        # Set position of bar on X axis
+        result_dict = {}
+        result_dict['values'] = val
+        result_dict['metrics'] = [y_axis[idx_line]]*len(val)
+        
+        result_df = pd.DataFrame(data=result_dict)
+
+        # Make the plot
+        sns.violinplot(ax=axs[idx_line//4, idx_line%4], x="metrics", y="values", data=result_df)
+        axs[idx_line//4, idx_line%4].set(xticklabels=[])
+        axs[idx_line//4, idx_line%4].set_ylabel("")
+        axs[idx_line//4, idx_line%4].set_xlabel("")
+        axs[idx_line//4, idx_line%4].set_title(y_axis[idx_line], fontsize=20)
+    
+    # Save plot
+    plt.savefig(output_path)
+
+
 def save_hist(names, values, output_path, x_axis, y_axis):
     '''
     Create a histogram plot
@@ -523,10 +557,20 @@ def save_graphs(output_folder, metrics_dict, data_form='split'):
     data_name = np.array(list(metrics_dict.keys()))
 
     # Use violin plots
-    for metric, unit in zip(['nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt', 'X', 'Y', 'Z'], ['pixel', 'pixel', 'pixel', '', 'mm/pixel', 'mm/pixel', 'mm/pixel', '', 'mm', 'mm', 'mm']):
-        out_path = os.path.join(output_folder, f'{metric}.png')
-        metric_name = metric + ' ' + f'({unit})'
-        save_violin(names=data_name, values=[convert_dict_to_float_list(metrics_dict[name][metric]) for name in data_name], output_path=out_path, x_axis=data_form, y_axis=metric_name)
+    # for metric, unit in zip(['nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt', 'X', 'Y', 'Z'], ['pixel', 'pixel', 'pixel', '', 'mm/pixel', 'mm/pixel', 'mm/pixel', '', 'mm', 'mm', 'mm']):
+    #     out_path = os.path.join(output_folder, f'{metric}.png')
+    #     metric_name = metric + ' ' + f'({unit})'
+    #     save_violin(names=data_name, values=[convert_dict_to_float_list(metrics_dict[name][metric]) for name in data_name], output_path=out_path, x_axis=data_form, y_axis=metric_name)
+
+    # Save violin plot in one fig
+    for name in data_name:
+        tot_values = []
+        tot_names = []
+        for metric, unit in zip(['nx', 'ny', 'nz', 'nt', 'px', 'py', 'pz', 'pt', 'X', 'Y', 'Z'], ['pixel', 'pixel', 'pixel', '', 'mm/pixel', 'mm/pixel', 'mm/pixel', '', 'mm', 'mm', 'mm']):
+            tot_values.append(convert_dict_to_float_list(metrics_dict[name][metric]))
+            tot_names.append(metric + ' ' + f'({unit})')
+        out_path = os.path.join(output_folder, f'violin_stats.png')
+        save_group_violins(name=name, values=tot_values, output_path=out_path, x_axis=data_form, y_axis=tot_names)
 
     # Use bar pie chart
     for metric in ['orientation', 'contrast']:
