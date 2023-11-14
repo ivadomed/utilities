@@ -495,6 +495,18 @@ def save_pie(names, values, output_path, x_axis, y_axis):
                 result_dict[name][val] = 1
             else:
                 result_dict[name][val] += 1
+        # Regroup small values
+        other_count = 0
+        other_name_list = []
+        for v, count in result_dict[name].items():
+            if count <= math.ceil(0.004*len(values[i])):
+                other_count += count
+                other_name_list.append(v)
+        for v in other_name_list:
+            del result_dict[name][v]
+        if other_name_list:
+            result_dict[name]['other'] = other_count
+
     
     # define Seaborn color palette to use 
     palette_color = sns.color_palette('bright')
