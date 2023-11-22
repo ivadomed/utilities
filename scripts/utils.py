@@ -14,7 +14,12 @@ from image import Image
 CONTRAST = {'t1': ['T1w'],
             't2': ['T2w'],
             't2s':['T2star'],
-            't1_t2': ['T1w', 'T2w']}
+            't1_t2': ['T1w', 'T2w'],
+            'psir': ['PSIR'],
+            'stir': ['STIR'],
+            'psir_stir': ['PSIR', 'STIR'],
+            't1_t2_psir_stir': ['T1w', 'T2w', 'PSIR', 'STIR']
+            }
 
 ## Functions
 def get_img_path_from_mask_path(str_path, derivatives_folder='derivatives'):
