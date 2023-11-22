@@ -39,9 +39,7 @@ GPU:
 
 ```console
 # install pytorch using conda - https://pytorch.org/get-started/locally/
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
-# OR using pip:
-# pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 # install nnunet
 pip install nnunetv2
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
