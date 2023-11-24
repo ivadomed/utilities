@@ -140,7 +140,7 @@ Replace `CONFIG` with `2d`, `3d_fullres`, `3d_lowres`, or `3d_cascade_fullres` c
 Replace `FOLD` with 0 if you want to run only a single fold; otherwise, 5 folds are the default.
 
 > **Note**
-> Every 50 epochs, a checkpoint is saved (do not stop before the 50th epoch if you want to run inference).
+> Every 50 epochs, a checkpoint is saved (do not stop before the 50th epoch if you want to run inference). You can continue a previous training from the latest checkpoint, by adding the `--c` flag to the `nnUNetv2_train` command.
 
 > **Note**
 > Figure tracking the training progress is available `nnUNet_results/DATASET_ID/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_X/progress.png`
