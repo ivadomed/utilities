@@ -68,8 +68,6 @@ def extract_epoch_and_dice(log_file_path):
 
         if fold_match:
             fold_number = int(fold_match.group(1))
-        else:
-            fold_number = 'all'
 
         if epoch_match:
             epoch = int(epoch_match.group(1))
@@ -86,6 +84,9 @@ def extract_epoch_and_dice(log_file_path):
                 # Evaluating the string representation of the list
                 extracted_list = eval(extracted_list_str)
                 epoch_and_dice_data[-1]['pseudo_dice'] = extracted_list
+
+    if not fold_number:
+        fold_number = 'all'
 
     return epoch_and_dice_data, fold_number
 
