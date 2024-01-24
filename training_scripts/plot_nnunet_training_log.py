@@ -85,7 +85,8 @@ def extract_epoch_and_dice(log_file_path):
                 extracted_list = eval(extracted_list_str)
                 epoch_and_dice_data[-1]['pseudo_dice'] = extracted_list
 
-    if not fold_number:
+    # Check if fold_number is instance of int ("if not fold_number:" does not work for '0')
+    if not isinstance(fold_number, int):
         fold_number = 'all'
 
     return epoch_and_dice_data, fold_number
