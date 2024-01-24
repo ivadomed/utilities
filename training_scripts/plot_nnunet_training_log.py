@@ -126,7 +126,7 @@ def main():
     # Add y-axis title
     fig.update_yaxes(title_text='Dice')
     # Add title with fold number
-    fig.update_layout(title=f'Fold {fold_number} -- Pseudo Dice vs. Epoch (Training)')
+    fig.update_layout(title=f'Fold {fold_number} -- Pseudo Dice vs. Epoch (Validation)')
 
     # Show the interactive plot
     if args.interactive_figure:
