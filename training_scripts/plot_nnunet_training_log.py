@@ -138,9 +138,16 @@ def main():
     print(f'Saved plot to {fname_fig}')
 
     # Print the latest Dice for each class
-    print(f'Latest Dice for each class: {df.iloc[-2, 1:-1].to_list()}')
+    print(f'Latest Validation Pseudo Dice for each class: {df.iloc[-2, 1:-1].to_list()}')
     # Print the mean Dice across all classes
-    print(f'Mean Dice across all classes: {df.iloc[-2, -1]}')
+    print(f'Mean Validation Pseudo Dice across all classes: {df.iloc[-2, -1]}')
+
+    # SUPER RELEVANT discussion "validation dice" vs. "validation pseudo-dice":
+    # https://github.com/ivadomed/utilities/pull/41#discussion_r1465360824
+    # - "validation dice" is computed from validation samples (not used for training) on full images (not patches)
+    # after the model training completely finish
+    # - "validation pseudo-dice" is computed on randomly drawn patches (not full images) from the validation data at
+    # the end of each epoch
 
     # Plotting using Seaborn
     # sns.lineplot(data=df.drop('epoch', axis=1), dashes=True)
