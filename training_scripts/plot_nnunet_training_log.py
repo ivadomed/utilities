@@ -90,32 +90,7 @@ def extract_epoch_and_dice(log_file_path):
     return epoch_and_dice_data, fold_number
 
 
-def main():
-
-    # Parse the command line arguments
-    parser = get_parser()
-    args = parser.parse_args()
-
-    # Get absolute path to the log file
-    log_file_path = os.path.abspath(os.path.expanduser(args.i))
-
-    data, fold_number = extract_epoch_and_dice(log_file_path)
-
-    # Convert data to a Pandas DataFrame
-    df = pd.DataFrame(data)
-
-    # Create columns for each element in pseudo_dice
-    # [:-1] is used to remove the last row, which is empty
-    df_pseudo_dice = pd.DataFrame(df['pseudo_dice'].to_list()[:-1],
-                                  columns=[f'validation_pseudo_dice_class_{i+1}'
-                                           for i in range(len(df['pseudo_dice'].iloc[0]))])
-
-    # Concatenate the new DataFrame with the original DataFrame
-    df = pd.concat([df, df_pseudo_dice], axis=1).drop('pseudo_dice', axis=1)
-
-    # Compute mean of pseudo dice across all classes
-    df['validation_pseudo_dice_mean'] = df.iloc[:, 1:].mean(axis=1)
-
+def create_figure(df, log_file_path, fold_number, args):
     # Plotting using Plotly Express
     fig = px.line(df, x='epoch', y=df.columns[1:])
     # Update line width to 3
@@ -154,6 +129,36 @@ def main():
     # after the model training completely finish
     # - "validation pseudo-dice" is computed on randomly drawn patches (not full images) from the validation data at
     # the end of each epoch
+
+
+def main():
+
+    # Parse the command line arguments
+    parser = get_parser()
+    args = parser.parse_args()
+
+    # Get absolute path to the log file
+    log_file_path = os.path.abspath(os.path.expanduser(args.i))
+
+    data, fold_number = extract_epoch_and_dice(log_file_path)
+
+    # Convert data to a Pandas DataFrame
+    df = pd.DataFrame(data)
+
+    # Create columns for each element in pseudo_dice
+    # [:-1] is used to remove the last row, which is empty
+    df_pseudo_dice = pd.DataFrame(df['pseudo_dice'].to_list()[:-1],
+                                  columns=[f'validation_pseudo_dice_class_{i+1}'
+                                           for i in range(len(df['pseudo_dice'].iloc[0]))])
+
+    # Concatenate the new DataFrame with the original DataFrame
+    df = pd.concat([df, df_pseudo_dice], axis=1).drop('pseudo_dice', axis=1)
+
+    # Compute mean of pseudo dice across all classes
+    df['validation_pseudo_dice_mean'] = df.iloc[:, 1:].mean(axis=1)
+
+    # Create figure
+    create_figure(df, log_file_path, fold_number, args)
 
 
 if __name__ == "__main__":
