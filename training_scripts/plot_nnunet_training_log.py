@@ -14,8 +14,6 @@ import re
 import argparse
 
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 import plotly.express as px
 
 
@@ -156,16 +154,6 @@ def main():
     # after the model training completely finish
     # - "validation pseudo-dice" is computed on randomly drawn patches (not full images) from the validation data at
     # the end of each epoch
-
-    # Plotting using Seaborn
-    # sns.lineplot(data=df.drop('epoch', axis=1), dashes=True)
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Pseudo Dice')
-    # plt.title('Pseudo Dice vs. Epoch')
-    # plt.show()
-    # plt.savefig('pseudo_dice_vs_epoch.png')
-    # plt.close()
-    # print('Saved plot to pseudo_dice_vs_epoch.png')
 
 
 if __name__ == "__main__":
