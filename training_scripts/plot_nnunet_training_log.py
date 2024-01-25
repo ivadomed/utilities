@@ -119,11 +119,15 @@ def main():
     df['validation_pseudo_dice_mean'] = df.iloc[:, 1:].mean(axis=1)
 
     # Plotting using Plotly Express
-    fig = px.line(df, x='epoch', y=df.columns[1:], title='Pseudo Dice vs. Epoch')
+    fig = px.line(df, x='epoch', y=df.columns[1:])
+    # Update line width to 3
+    fig.update_traces(line=dict(width=3))
     # Update the line color for 'pseudo_dice_mean' to black
-    fig.update_traces(line=dict(color='black', width=3), selector=dict(name='pseudo_dice_mean'))
+    fig.update_traces(line=dict(color='black', width=5), selector=dict(name='pseudo_dice_mean'))
     # Fix the y-axis range to be between 0 and 1
     fig.update_yaxes(range=[-0.1, 1.1])
+    # Add x-axis title
+    fig.update_xaxes(title_text='Epoch')
     # Add y-axis title
     fig.update_yaxes(title_text='Validation Pseudo Dice')
     # Add title with fold number
