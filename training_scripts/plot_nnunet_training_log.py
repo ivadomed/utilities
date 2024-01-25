@@ -1,5 +1,5 @@
 """
-Read nnUNet training log file, extract epoch number and pseudo dice and plot them.
+Read nnUNet training log file, extract epoch number and validation pseudo dice and plot them.
 This is useful for comparing multi-class training (because nnUNet plots only the mean dice across classes).
 
 Usage:
@@ -109,13 +109,14 @@ def main():
     # Create columns for each element in pseudo_dice
     # [:-1] is used to remove the last row, which is empty
     df_pseudo_dice = pd.DataFrame(df['pseudo_dice'].to_list()[:-1],
-                                  columns=[f'pseudo_dice_{i+1}' for i in range(len(df['pseudo_dice'].iloc[0]))])
+                                  columns=[f'validation_pseudo_dice_class_{i+1}'
+                                           for i in range(len(df['pseudo_dice'].iloc[0]))])
 
     # Concatenate the new DataFrame with the original DataFrame
     df = pd.concat([df, df_pseudo_dice], axis=1).drop('pseudo_dice', axis=1)
 
     # Compute mean of pseudo dice across all classes
-    df['pseudo_dice_mean'] = df.iloc[:, 1:].mean(axis=1)
+    df['validation_pseudo_dice_mean'] = df.iloc[:, 1:].mean(axis=1)
 
     # Plotting using Plotly Express
     fig = px.line(df, x='epoch', y=df.columns[1:], title='Pseudo Dice vs. Epoch')
@@ -124,9 +125,12 @@ def main():
     # Fix the y-axis range to be between 0 and 1
     fig.update_yaxes(range=[-0.1, 1.1])
     # Add y-axis title
-    fig.update_yaxes(title_text='Dice')
+    fig.update_yaxes(title_text='Validation Pseudo Dice')
     # Add title with fold number
-    fig.update_layout(title=f'Fold {fold_number} -- Pseudo Dice vs. Epoch (Validation)')
+    fig.update_layout(title=f'Fold {fold_number} -- Validation Pseudo Dice vs. Epoch')
+
+    # Increase all font sizes
+    fig.update_layout(font=dict(size=28))
 
     # Show the interactive plot
     if args.interactive_figure:
@@ -140,7 +144,7 @@ def main():
     # Print the latest Dice for each class
     print(f'Latest Validation Pseudo Dice for each class: {df.iloc[-2, 1:-1].to_list()}')
     # Print the mean Dice across all classes
-    print(f'Mean Validation Pseudo Dice across all classes: {df.iloc[-2, -1]}')
+    print(f'Latest Mean Validation Pseudo Dice across all classes: {df.iloc[-2, -1]}')
 
     # SUPER RELEVANT discussion "validation dice" vs. "validation pseudo-dice":
     # https://github.com/ivadomed/utilities/pull/41#discussion_r1465360824
