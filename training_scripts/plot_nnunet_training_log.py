@@ -118,6 +118,9 @@ def create_figure(df, log_file_path, fold_number, args):
     if args.interactive_figure:
         fig.show()
 
+    # Tighten the layout
+    fig.update_layout(margin=dict(l=80, r=50, b=50, t=100))
+
     # Save plot to a file
     fname_fig = log_file_path.replace('.txt', '.png')
     fig.write_image(fname_fig, width=1920, height=1080)
