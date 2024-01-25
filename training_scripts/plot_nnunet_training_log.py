@@ -2,6 +2,11 @@
 Read nnUNet training log file, extract epoch number and validation pseudo dice and plot them.
 This is useful for comparing multi-class training (because nnUNet plots only the mean dice across classes).
 
+Create venv and install dependencies
+    python3 -m venv venv
+    source ./venv/bin/activate
+    pip install pandas plotly kaleido
+
 Usage:
     python plot_nnunet_training_log.py -i <path_to_log_file>
     python plot_nnunet_training_log.py -i <path_to_log_file> -interactive-figure
