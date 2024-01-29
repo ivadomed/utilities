@@ -71,6 +71,8 @@ def extract_epoch_and_dice(log_file_path):
 
         if fold_match:
             fold_number = int(fold_match.group(1))
+        else:
+            fold_number = None
 
         if epoch_match:
             epoch = int(epoch_match.group(1))
