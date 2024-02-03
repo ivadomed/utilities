@@ -59,6 +59,7 @@ def extract_epoch_and_dice(log_file_path):
     fold_pattern = re.compile(r'Desired fold for training: (\d+)')
     epoch_pattern = re.compile(r'Epoch (\d+)')
     dice_pattern = re.compile(r'Pseudo dice \[([^,\]]+(?:, [^,\]]+)*)\]')
+    fold_number = None
 
     with open(log_file_path, 'r') as file:
         lines = file.readlines()
@@ -71,8 +72,6 @@ def extract_epoch_and_dice(log_file_path):
 
         if fold_match:
             fold_number = int(fold_match.group(1))
-        else:
-            fold_number = None
 
         if epoch_match:
             epoch = int(epoch_match.group(1))
