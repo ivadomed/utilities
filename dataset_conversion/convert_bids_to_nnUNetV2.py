@@ -101,12 +101,9 @@ def convert_subject(root, subject, channel, contrast, label_suffix, data_type, p
         sub_name = re.match(r'^([^_]+)', Path(subject_image_file).name).group(1)
 
     else:
-        subject_directory = os.path.join(root, subject, data_type)
-        all_files = os.listdir(subject_directory)
-        subject_image_file = os.path.join(subject_directory, [f for f in all_files if f.endswith('nii.gz')][0])
-        subject_label_directory = os.path.join(root, 'derivatives', 'labels', subject, data_type)
-        all_label_files = os.listdir(subject_label_directory)
-        subject_label_file = os.path.join(subject_label_directory, [f for f in all_label_files if f.endswith('nii.gz')][0])
+        subject_image_file = os.path.join(root, subject, data_type, f"{subject}_{contrast}.nii.gz")
+        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, data_type,
+                                          f"{subject}_{contrast}_{label_suffix}.nii.gz")
         sub_name = re.match(r'^([^_]+)', Path(subject_image_file).name).group(1)
 
     if os.path.exists(subject_image_file):
