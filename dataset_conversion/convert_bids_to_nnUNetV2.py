@@ -27,6 +27,7 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 import nibabel as nib
 import numpy as np
+import glob
 
 
 def get_parser():
@@ -40,6 +41,8 @@ def get_parser():
     # TODO accept multi value label
     parser.add_argument('--label-suffix', type=str,
                         help='Label suffix. Example: lesion-manual or seg-manual, if None no label used')
+    parser.add_argument('--data-type', type=str, default='anat',
+                        help='Type of BIDS dataset used. For example, anat, func, dwi or etc. Default: anat')
     parser.add_argument('--dataset-name', '-dname', default='MyDataset', type=str,
                         help='Specify the task name. Example: MyDataset')
     parser.add_argument('--dataset-number', '-dnum', default=501, type=int,
@@ -56,7 +59,7 @@ def get_parser():
     return parser
 
 
-def convert_subject(root, subject, channel, contrast, label_suffix, path_out_images, path_out_labels, counter,
+def convert_subject(root, subject, channel, contrast, label_suffix, data_type, path_out_images, path_out_labels, counter,
                     list_images, list_labels, is_ses, copy, DS_name, session=None):
     """Function to get image from original BIDS dataset modify if needed and place
         it with a compatible name in nnUNet dataset.
@@ -83,14 +86,27 @@ def convert_subject(root, subject, channel, contrast, label_suffix, path_out_ima
 
     """
     if is_ses:
-        subject_image_file = os.path.join(root, subject, session, 'anat', f"{subject}_{session}_{contrast}.nii.gz")
-        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, 'anat',
+        subject_image_file = os.path.join(root, subject, session, data_type, f"{subject}_{session}_{contrast}.nii.gz")
+        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, session, data_type,
                                           f"{subject}_{session}_{contrast}_{label_suffix}.nii.gz")
         sub_name = re.match(r'^([^_]+_[^_]+)', Path(subject_image_file).name).group(1)
+
+    elif data_type == 'func':
+        subject_directory = os.path.join(root, subject, data_type)
+        all_files = os.listdir(subject_directory)
+        subject_image_file = os.path.join(subject_directory, [f for f in all_files if f.endswith('nii.gz')][0])
+        subject_label_directory = os.path.join(root, 'derivatives', 'labels', subject, data_type)
+        all_label_files = os.listdir(subject_label_directory)
+        subject_label_file = os.path.join(subject_label_directory, [f for f in all_label_files if f.endswith('nii.gz')][0])
+        sub_name = re.match(r'^([^_]+)', Path(subject_image_file).name).group(1)
+
     else:
-        subject_image_file = os.path.join(root, subject, 'anat', f"{subject}_{contrast}.nii.gz")
-        subject_label_file = os.path.join(root, 'derivatives', 'labels', subject, 'anat',
-                                          f"{subject}_{contrast}_{label_suffix}.nii.gz")
+        subject_directory = os.path.join(root, subject, data_type)
+        all_files = os.listdir(subject_directory)
+        subject_image_file = os.path.join(subject_directory, [f for f in all_files if f.endswith('nii.gz')][0])
+        subject_label_directory = os.path.join(root, 'derivatives', 'labels', subject, data_type)
+        all_label_files = os.listdir(subject_label_directory)
+        subject_label_file = os.path.join(subject_label_directory, [f for f in all_label_files if f.endswith('nii.gz')][0])
         sub_name = re.match(r'^([^_]+)', Path(subject_image_file).name).group(1)
 
     if os.path.exists(subject_image_file):
@@ -137,6 +153,8 @@ def main():
     label_suffix = args.label_suffix
     if label_suffix is None:
         print(f"No suffix label provided, ignoring label to create this dataset")
+    
+    data_type = args.data_type
 
     # create individual directories for train and test images and labels
     path_out_imagesTr = Path(os.path.join(path_out, 'imagesTr'))
@@ -194,9 +212,9 @@ def main():
                     train_ctr = len(train_images)
                     for contrast in contrast_list:
                         train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
-                                                                     label_suffix, path_out_imagesTr, path_out_labelsTr,
+                                                                     label_suffix, data_type, path_out_imagesTr, path_out_labelsTr,
                                                                      train_ctr + test_ctr, train_images, train_labels,
-                                                                     True, copy, DS_name, session)
+                                                                     True, copy, DS_name, sessions)
 
 
             # No session folder(s) exist
@@ -204,7 +222,7 @@ def main():
                 train_ctr = len(train_images)
                 for contrast in contrast_list:
                     train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
-                                                                 label_suffix, path_out_imagesTr, path_out_labelsTr,
+                                                                 label_suffix, data_type, path_out_imagesTr, path_out_labelsTr,
                                                                  train_ctr + test_ctr, train_images, train_labels,
                                                                  False, copy, DS_name)
 
@@ -221,7 +239,7 @@ def main():
                     test_ctr = len(test_images)
                     for contrast in contrast_list:
                         test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
-                                                                   label_suffix, path_out_imagesTs, path_out_labelsTs,
+                                                                   label_suffix, data_type, path_out_imagesTs, path_out_labelsTs,
                                                                    train_ctr + test_ctr, test_images, test_labels, True,
                                                                    copy, DS_name, session)
 
@@ -231,7 +249,7 @@ def main():
                 test_ctr = len(test_images)
                 for contrast in contrast_list:
                     test_images, test_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
-                                                                 label_suffix, path_out_imagesTs, path_out_labelsTs,
+                                                                 label_suffix, data_type, path_out_imagesTs, path_out_labelsTs,
                                                                  train_ctr + test_ctr, test_images, test_labels, False,
                                                                  copy, DS_name)
 
