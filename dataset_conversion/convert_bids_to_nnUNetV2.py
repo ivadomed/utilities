@@ -211,7 +211,7 @@ def main():
                         train_images, train_labels = convert_subject(root, subject, channel_dict[contrast], contrast,
                                                                      label_suffix, data_type, path_out_imagesTr, path_out_labelsTr,
                                                                      train_ctr + test_ctr, train_images, train_labels,
-                                                                     True, copy, DS_name, sessions)
+                                                                     True, copy, DS_name, session)
 
 
             # No session folder(s) exist
