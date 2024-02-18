@@ -92,8 +92,8 @@ def get_parser():
                         help='Ratios of training (includes validation) and test splits lying between 0-1. '
                              'Example: --split 0.8 0.2')
     parser.add_argument('--copy', '-cp', type=bool, default=False,
-                        help='Making symlink (False) or copying (True) the files in the nnUNet dataset, '
-                             'default = False. Example for symlink: --copy True')
+                        help='If used, the files will be copied to the new structure. If not used, the symbolic links '
+                             'will be created. Default: False. Example for copy: --copy True')
     return parser
 
 
