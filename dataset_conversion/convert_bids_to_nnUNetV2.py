@@ -2,6 +2,46 @@
 Converts BIDS-structured dataset to the nnUNetv2 dataset format. Full details about
 the format can be found here: https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md
 
+Example of the input BIDS dataset structure:
+    ...
+    ├── sub-045
+    │   └── anat
+    │       └── sub-045_T2w.nii.gz
+    ├── sub-046
+    │   └── anat
+    │       └── sub-046_T2w.nii.gz
+    ...
+    ├── derivatives
+    │   └── labels
+    │       ├── sub-045
+    │       │   └── anat
+    │       │       ├── sub-045_T2w_lesion-manual.json
+    │       │       ├── sub-045_T2w_lesion-manual.nii.gz
+    │       │       ├── sub-045_T2w_seg-manual.json
+    │       │       └── sub-045_T2w_seg-manual.nii.gz
+    │       ├── sub-046
+    │           └── anat
+    │               ├── sub-046_T2w_lesion-manual.json
+    │               ├── sub-046_T2w_lesion-manual.nii.gz
+    │               ├── sub-046_T2w_seg-manual.json
+    │               └── sub-046_T2w_seg-manual.nii.gz
+    ...
+
+Example of the output nnUNetv2 dataset structure:
+    ├── dataset.json
+    ├── imagesTr
+    │     ├── MyDataset-sub-046_000_0000.nii.gz
+          ...
+    ├── imagesTs
+    │     ├── MyDataset-sub-045_000_0000.nii.gz
+          ...
+    ├── labelsTr
+    │     ├── MyDataset-sub-046_000.nii.gz
+          ...
+    └── labelsTs
+        ├── MyDataset-sub-045_000.nii.gz
+        ...
+
 Usage example:
     python convert_bids_to_nnUNetv2.py --path-data ~/data/dataset --path-out ~/data/dataset-nnunet
                     --dataset-name MyDataset --dataset-number 501 --split 0.8 0.2 --seed 99 --copy False
