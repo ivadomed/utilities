@@ -65,9 +65,7 @@ from collections import OrderedDict
 import pandas as pd
 from loguru import logger
 from sklearn.model_selection import train_test_split
-import nibabel as nib
 import numpy as np
-import glob
 
 
 def get_parser():
