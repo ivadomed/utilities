@@ -31,7 +31,7 @@ Or `conda`:
 
 ```console
 # create conda env
-conda create --name nnunet
+conda create --name nnunet python=3.9
 conda activate nnunet
 ```
 
