@@ -39,12 +39,14 @@ GPU:
 
 ```console
 # install pytorch using conda - https://pytorch.org/get-started/locally/
-conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install pytorch torchvision torchaudio pytorch-cuda=XX.X -c pytorch -c nvidia
 # install nnunet
 pip install nnunetv2
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
+
+ℹ️ For `romane`, use `pytorch-cuda=12.1`; for `rosenberg`, use `pytorch-cuda=11.7`.
 
 CPU (for inference only):
 
