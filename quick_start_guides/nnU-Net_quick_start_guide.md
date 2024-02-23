@@ -37,6 +37,8 @@ conda activate nnunet
 
 GPU:
 
+ℹ️ For `romane`, use `pytorch-cuda=12.1`; for `rosenberg`, use `pytorch-cuda=11.7`.
+
 ```console
 # install pytorch using conda - https://pytorch.org/get-started/locally/
 conda install pytorch torchvision torchaudio pytorch-cuda=XX.X -c pytorch -c nvidia
@@ -46,7 +48,14 @@ pip install nnunetv2
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
 
-ℹ️ For `romane`, use `pytorch-cuda=12.1`; for `rosenberg`, use `pytorch-cuda=11.7`.
+To verify that your `pytorch` installation supports CUDA, start `python` and run the following commands:
+
+```python
+import torch
+print(torch.cuda.is_available())
+```
+
+This should now return `True`.
 
 CPU (for inference only):
 
