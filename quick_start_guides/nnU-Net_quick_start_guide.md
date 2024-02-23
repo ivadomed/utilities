@@ -37,7 +37,7 @@ conda activate nnunet
 
 **GPU:**
 
-ℹ️ For `romane`, use `pytorch-cuda=12.1`; for `rosenberg`, use `pytorch-cuda=11.7`.
+ℹ️ On `romane`, use `pytorch-cuda=12.1`; on `rosenberg`, use `pytorch-cuda=11.7`.
 
 ```console
 # install pytorch using conda - https://pytorch.org/get-started/locally/
@@ -47,6 +47,17 @@ pip install nnunetv2
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
+
+<details><summary>Alternative installation on rosenberg</summary>
+
+```console
+conda create --name nnunet python=3.9
+conda activate nnunet
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install nnunetv2
+```
+
+</details>
 
 To verify that your `pytorch` installation supports CUDA, start `python` and run the following commands:
 
