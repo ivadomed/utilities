@@ -35,7 +35,7 @@ conda create --name nnunet python=3.9
 conda activate nnunet
 ```
 
-GPU:
+**GPU:**
 
 ℹ️ For `romane`, use `pytorch-cuda=12.1`; for `rosenberg`, use `pytorch-cuda=11.7`.
 
@@ -57,7 +57,7 @@ print(torch.cuda.is_available())
 
 This should now return `True`.
 
-CPU (for inference only):
+**CPU (for inference only):**
 
 ```console
 # install pytorch - https://pytorch.org/get-started/locally/
