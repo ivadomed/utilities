@@ -35,7 +35,7 @@ conda create --name nnunet python=3.9
 conda activate nnunet
 ```
 
-**GPU `romane`:**
+**GPU `conda install`:**
 
 ```console
 # install pytorch using conda - https://pytorch.org/get-started/locally/
@@ -46,9 +46,10 @@ pip install nnunetv2
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
 
-**GPU `rosenberg`:**
+**GPU `pip3 install`:**
 
 ```console
+# install pytorch using pip
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 pip install nnunetv2
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
@@ -63,6 +64,8 @@ print(torch.cuda.is_available())
 ```
 
 This should now return `True`.
+
+ℹ️ If you encounter issues during installation, please report them to [this issue](https://github.com/ivadomed/utilities/issues/45).
 
 **CPU (for inference only):**
 
