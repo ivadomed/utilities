@@ -12,7 +12,7 @@ Official installation instructions are available [here](https://github.com/MIC-D
 > Always install nnU-Net inside a virtual environment.
 
 > **Note**
-> Run the installation commands on a GPU cluster.
+> Run the installation commands on a GPU cluster, not on your laptop.
 
 You can use either `python -m venv` and `git clone`:
 
