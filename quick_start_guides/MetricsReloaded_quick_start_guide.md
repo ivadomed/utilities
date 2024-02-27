@@ -4,6 +4,7 @@ Useful links:
 - [MetricsReloaded GitHub page](https://github.com/Project-MONAI/MetricsReloaded)
 - [MetricsReloaded documentation](https://metricsreloaded.readthedocs.io/en/latest/)
 - [MetricsReloaded publication](https://www.nature.com/articles/s41592-023-02151-z)
+- [MetricsReloaded preprint](https://arxiv.org/pdf/2206.01653v5.pdf) - preprint contains more figures than the publication
 
 ## Installation
 
