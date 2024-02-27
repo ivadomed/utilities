@@ -96,12 +96,20 @@ def main():
     # for example, for nnunet region-based segmentation, spinal cord has label 1, and lesions have label 2
     unique_labels_reference = np.unique(reference_data)
     unique_labels_reference = unique_labels_reference[unique_labels_reference != 0]  # remove background label
+    unique_labels_prediction = np.unique(prediction_data)
+    unique_labels_prediction = unique_labels_prediction[unique_labels_prediction != 0]  # remove background label
+
+    # Get the unique labels that are present in the reference OR prediction images
+    unique_labels = np.unique(np.concatenate((unique_labels_reference, unique_labels_prediction)))
+    # If both the reference and prediction images are empty, the unique_labels will be [0]
+    if len(unique_labels) == 0:
+        unique_labels = [0]
 
     # create dictionary to store the metrics
     output_dict = {'reference': args.reference, 'prediction': args.prediction}
 
     # loop over all unique labels
-    for label in unique_labels_reference:
+    for label in unique_labels:
         # create binary masks for the current label
         print(f'Processing label {label}')
         prediction_data_label = np.array(prediction_data == label, dtype=float)
@@ -115,6 +123,10 @@ def main():
         # https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.normalised_surface_distance
         bpm = BPM(prediction_data_label, reference_data_label, measures=args.metrics)
         dict_seg = bpm.to_dict_meas()
+        # Note:
+        #  - if the reference is NOT empty and the prediction is empty the DSC and NSD are set to 0.0
+        #  - if the reference is empty and the prediction is NOT empty the DSC and NSD are set to 0.0
+        #  - if the reference and the prediction are both empty the DSC and NSD are set to 1.0
 
         # add the metrics to the output dictionary
         output_dict[label] = dict_seg
