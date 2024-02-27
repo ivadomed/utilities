@@ -104,7 +104,7 @@ def main():
     for label in unique_labels_reference:
         # create binary masks for the current label
         print(f'Processing label {label}')
-        predidction_data_label = np.array(prediction_data == label, dtype=float)
+        prediction_data_label = np.array(prediction_data == label, dtype=float)
         reference_data_label = np.array(reference_data == label, dtype=float)
 
         # Dice similarity coefficient (DSC):
@@ -113,7 +113,7 @@ def main():
         # Normalized surface distance (NSD):
         # Fig. 86 in https://arxiv.org/pdf/2206.01653v5.pdf
         # https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.normalised_surface_distance
-        bpm = BPM(predidction_data_label, reference_data_label, measures=args.metrics)
+        bpm = BPM(prediction_data_label, reference_data_label, measures=args.metrics)
         dict_seg = bpm.to_dict_meas()
 
         # add the metrics to the output dictionary
