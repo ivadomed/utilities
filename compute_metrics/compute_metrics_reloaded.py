@@ -128,6 +128,11 @@ def main():
         #  - if the reference is NOT empty and the prediction is empty the DSC and NSD are set to 0.0
         #  - if the reference is empty and the prediction is NOT empty the DSC and NSD are set to 0.0
         #  - if the reference and the prediction are both empty the DSC and NSD are set to 1.0
+        # Store info whether the reference or prediction is empty
+        dict_seg['EmptyRef'] = bpm.flag_empty_ref
+        dict_seg['EmptyPred'] = bpm.flag_empty_pred
+        # add the metrics to the output dictionary
+        output_dict[label] = dict_seg
 
         # add the metrics to the output dictionary
         output_dict[label] = dict_seg
