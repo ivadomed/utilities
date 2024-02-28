@@ -12,6 +12,13 @@ Default metrics (semantic segmentation):
     - Normalized surface distance (NSD)
 (for details, see Fig. 2, Fig. 11, and Fig. 12 in https://arxiv.org/abs/2206.01653v5)
 
+Dice similarity coefficient (DSC):
+- Fig. 65 in https://arxiv.org/pdf/2206.01653v5.pdf
+- https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.dsc
+Normalized surface distance (NSD):
+- Fig. 86 in https://arxiv.org/pdf/2206.01653v5.pdf
+- https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.normalised_surface_distance
+
 The script is compatible with both binary and multi-class segmentation tasks (e.g., nnunet region-based).
 The metrics are computed for each unique label (class) in the reference (ground truth) image.
 The output is saved to a JSON file, for example:
@@ -115,12 +122,6 @@ def main():
         prediction_data_label = np.array(prediction_data == label, dtype=float)
         reference_data_label = np.array(reference_data == label, dtype=float)
 
-        # Dice similarity coefficient (DSC):
-        # Fig. 65 in https://arxiv.org/pdf/2206.01653v5.pdf
-        # https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.dsc
-        # Normalized surface distance (NSD):
-        # Fig. 86 in https://arxiv.org/pdf/2206.01653v5.pdf
-        # https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.normalised_surface_distance
         bpm = BPM(prediction_data_label, reference_data_label, measures=args.metrics)
         dict_seg = bpm.to_dict_meas()
         # Note:
