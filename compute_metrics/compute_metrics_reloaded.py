@@ -102,9 +102,9 @@ def main():
     # get all unique labels (classes)
     # for example, for nnunet region-based segmentation, spinal cord has label 1, and lesions have label 2
     unique_labels_reference = np.unique(reference_data)
-    unique_labels_reference = unique_labels_reference[unique_labels_reference != 0]  # remove background label
+    unique_labels_reference = unique_labels_reference[unique_labels_reference != 0]  # remove background
     unique_labels_prediction = np.unique(prediction_data)
-    unique_labels_prediction = unique_labels_prediction[unique_labels_prediction != 0]  # remove background label
+    unique_labels_prediction = unique_labels_prediction[unique_labels_prediction != 0]  # remove background
 
     # Get the unique labels that are present in the reference OR prediction images
     unique_labels = np.unique(np.concatenate((unique_labels_reference, unique_labels_prediction)))
