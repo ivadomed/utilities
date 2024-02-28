@@ -108,9 +108,6 @@ def main():
 
     # Get the unique labels that are present in the reference OR prediction images
     unique_labels = np.unique(np.concatenate((unique_labels_reference, unique_labels_prediction)))
-    # If both the reference and prediction images are empty, the unique_labels will be [0]
-    if len(unique_labels) == 0:
-        unique_labels = [0]
 
     # create dictionary to store the metrics
     output_dict = {'reference': args.reference, 'prediction': args.prediction}
@@ -130,6 +127,18 @@ def main():
         # add the metrics to the output dictionary
         output_dict[label] = dict_seg
 
+        if label == max(unique_labels):
+            break       # break to loop to avoid processing the background label ("else" block)
+    # Special case when both the reference and prediction images are empty
+    else:
+        label = 0
+        print(f'Processing label {label} -- both the reference and prediction are empty')
+        bpm = BPM(prediction_data, reference_data, measures=args.metrics)
+        dict_seg = bpm.to_dict_meas()
+
+        # Store info whether the reference or prediction is empty
+        dict_seg['EmptyRef'] = bpm.flag_empty_ref
+        dict_seg['EmptyPred'] = bpm.flag_empty_pred
         # add the metrics to the output dictionary
         output_dict[label] = dict_seg
 
