@@ -45,6 +45,16 @@ import pandas as pd
 from MetricsReloaded.metrics.pairwise_measures import BinaryPairwiseMeasures as BPM
 
 
+METRICS_TO_NAME = {
+    'dsc': 'Dice similarity coefficient (DSC)',
+    'hd': 'Hausdorff distance',
+    'fbeta': 'FBeta score',
+    'nsd': 'Normalized surface distance (NSD)',
+    'vol_diff': 'Volume difference',
+    'rel_vol_diff': 'Relative volume error (RVE)',
+}
+
+
 def get_parser():
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Compute MetricsReloaded metrics for segmentation tasks.')
@@ -222,6 +232,9 @@ def main():
 
     # Convert JSON data to pandas DataFrame
     df = build_output_dataframe(output_list)
+
+    # Rename columns
+    df.rename(columns={metric: METRICS_TO_NAME[metric] for metric in METRICS_TO_NAME}, inplace=True)
 
     # save as CSV
     fname_output_csv = os.path.abspath(args.output)
