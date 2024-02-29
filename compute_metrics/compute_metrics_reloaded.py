@@ -2,10 +2,15 @@
 Compute MetricsReloaded metrics for segmentation tasks.
 Details: https://github.com/Project-MONAI/MetricsReloaded/tree/main
 
-Example usage:
+Example usage (single reference-prediction pair):
     python compute_metrics_reloaded.py
         -reference sub-001_T2w_seg.nii.gz
         -prediction sub-001_T2w_prediction.nii.gz
+
+Example usage (multiple reference-prediction pairs):
+    python compute_metrics_reloaded.py
+        -reference /path/to/reference
+        -prediction /path/to/prediction
 
 Default metrics (semantic segmentation):
     - Dice similarity coefficient (DSC)
