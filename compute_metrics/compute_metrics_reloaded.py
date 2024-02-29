@@ -21,21 +21,11 @@ Normalized surface distance (NSD):
 
 The script is compatible with both binary and multi-class segmentation tasks (e.g., nnunet region-based).
 The metrics are computed for each unique label (class) in the reference (ground truth) image.
-The output is saved to a JSON file, for example:
+The output is saved to a CSV file, for example:
 
-{
-    "reference": "sub-001_T2w_seg.nii.gz",
-    "prediction": "sub-001_T2w_prediction.nii.gz",
-    "1.0": {
-        "dsc": 0.8195991091314031,
-        "nsd": 0.9455782312925171
-    },
-    "2.0": {
-        "dsc": 0.8042553191489362,
-        "nsd": 0.9580573951434879
-    }
-
-}
+reference	prediction	label	dsc	fbeta	nsd	vol_diff	rel_vol_diff	EmptyRef	EmptyPred
+seg.nii.gz	pred.nii.gz	1.0	0.819	0.819	0.945	0.105	-10.548	False	False
+seg.nii.gz	pred.nii.gz	2.0	0.743	0.743	0.923	0.121	-11.423	False	False
 
 Authors: Jan Valosek
 """
@@ -43,7 +33,6 @@ Authors: Jan Valosek
 
 import os
 import argparse
-import json
 import numpy as np
 import nibabel as nib
 import pandas as pd
@@ -68,9 +57,7 @@ def get_parser():
                              'see: https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/metrics.html. '
                              'Default: dsc, nsd')
     parser.add_argument('-output', type=str, default='metrics.csv', required=False,
-                        help='Path to the output CSV file to save the metrics. Default: metrics.csv'
-                             'Metrics are additionally saved to a JSON file with the same name but with .json '
-                             'extension.')
+                        help='Path to the output CSV file to save the metrics. Default: metrics.csv')
 
     return parser
 
@@ -208,7 +195,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    # Initialize the output JSON
+    # Initialize a list to store the output dictionaries (representing a single reference-prediction pair per subject)
     output_list = list()
 
     # Args.prediction and args.reference are paths to folders with multiple nii.gz files (i.e., multiple subjects)
@@ -235,12 +222,6 @@ def main():
     fname_output_csv = os.path.abspath(args.output)
     df.to_csv(fname_output_csv, index=False)
     print(f'Saved metrics to {fname_output_csv}.')
-
-    # save as JSON
-    fname_output = fname_output_csv.replace('.csv', '.json')
-    with open(fname_output, 'w') as f:
-        json.dump(output_list, f, indent=4)
-    print(f'Saved metrics to {fname_output}.')
 
 
 if __name__ == '__main__':
