@@ -223,6 +223,15 @@ def main():
     df.to_csv(fname_output_csv, index=False)
     print(f'Saved metrics to {fname_output_csv}.')
 
+    # Compute mean and standard deviation of metrics across all subjects
+    df_mean = (df.drop(columns=['reference', 'prediction', 'EmptyRef', 'EmptyPred']).groupby('label').
+               agg(['mean', 'std']).reset_index())
+
+    # save as CSV
+    fname_output_csv_mean = os.path.abspath(args.output.replace('.csv', '_mean.csv'))
+    df_mean.to_csv(fname_output_csv_mean, index=False)
+    print(f'Saved mean and standard deviation of metrics across all subjects to {fname_output_csv_mean}.')
+
 
 if __name__ == '__main__':
     main()
