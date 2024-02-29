@@ -163,7 +163,7 @@ def compute_metrics_single_subject(prediction, reference, metrics):
             break       # break to loop to avoid processing the background label ("else" block)
     # Special case when both the reference and prediction images are empty
     else:
-        label = 0
+        label = 1
         print(f'Processing label {label} -- both the reference and prediction are empty')
         bpm = BPM(prediction_data, reference_data, measures=metrics)
         dict_seg = bpm.to_dict_meas()
