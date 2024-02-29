@@ -56,10 +56,13 @@ def get_parser():
 
     # Arguments for model, data, and training
     parser.add_argument('-prediction', required=True, type=str,
-                        help='Path to the nifti image of test prediction.')
+                        help='Path to the folder with nifti images of test predictions or path to a single nifti image '
+                             'of test prediction.')
     parser.add_argument('-reference', required=True, type=str,
-                        help='Path to the nifti image of reference (ground truth) label.')
-    parser.add_argument('-metrics', nargs='+', default=['dsc', 'nsd'], required=False,
+                        help='Path to the folder with nifti images of reference (ground truth) or path to a single '
+                             'nifti image of reference (ground truth).')
+    parser.add_argument('-metrics', nargs='+', default=['dsc', 'fbeta', 'nsd', 'vol_diff', 'rel_vol_diff'],
+                        required=False,
                         help='List of metrics to compute. For details, '
                              'see: https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/metrics.html. '
                              'Default: dsc, nsd')
