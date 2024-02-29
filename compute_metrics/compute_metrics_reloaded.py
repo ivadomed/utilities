@@ -83,15 +83,39 @@ def load_nifti_image(file_path):
     return nifti_image.get_fdata()
 
 
-def main():
+def get_images_in_folder(prediction, reference):
+    """
+    Get all files (predictions and references/ground truths) in the input directories
+    :param prediction: path to the directory with prediction files
+    :param reference: path to the directory with reference (ground truth) files
+    :return: list of prediction files, list of reference/ground truth files
+    """
+    # Get all files in the directories
+    prediction_files = [os.path.join(prediction, f) for f in os.listdir(prediction) if f.endswith('.nii.gz')]
+    reference_files = [os.path.join(reference, f) for f in os.listdir(reference) if f.endswith('.nii.gz')]
+    # Check if the number of files in the directories is the same
+    if len(prediction_files) != len(reference_files):
+        raise ValueError(f'The number of files in the directories is different. '
+                         f'Prediction files: {len(prediction_files)}, Reference files: {len(reference_files)}')
+    print(f'Found {len(prediction_files)} files in the directories.')
+    # Sort the files
+    # NOTE: Hopefully, the files are named in the same order in both directories
+    prediction_files.sort()
+    reference_files.sort()
 
-    # parse command line arguments
-    parser = get_parser()
-    args = parser.parse_args()
+    return prediction_files, reference_files
 
+
+def compute_metrics_single_subject(prediction, reference, metrics):
+    """
+    Compute MetricsReloaded metrics for a single subject
+    :param prediction: path to the nifti image with the prediction
+    :param reference: path to the nifti image with the reference (ground truth)
+    :param metrics: list of metrics to compute
+    """
     # load nifti images
-    prediction_data = load_nifti_image(args.prediction)
-    reference_data = load_nifti_image(args.reference)
+    prediction_data = load_nifti_image(prediction)
+    reference_data = load_nifti_image(reference)
 
     # check whether the images have the same shape and orientation
     if prediction_data.shape != reference_data.shape:
@@ -109,8 +133,8 @@ def main():
     # Get the unique labels that are present in the reference OR prediction images
     unique_labels = np.unique(np.concatenate((unique_labels_reference, unique_labels_prediction)))
 
-    # create dictionary to store the metrics
-    output_dict = {'reference': args.reference, 'prediction': args.prediction}
+    # append entry into the output_list to store the metrics for the current subject
+    metrics_dict = {'reference': reference, 'prediction': prediction}
 
     # loop over all unique labels
     for label in unique_labels:
@@ -119,13 +143,13 @@ def main():
         prediction_data_label = np.array(prediction_data == label, dtype=float)
         reference_data_label = np.array(reference_data == label, dtype=float)
 
-        bpm = BPM(prediction_data_label, reference_data_label, measures=args.metrics)
+        bpm = BPM(prediction_data_label, reference_data_label, measures=metrics)
         dict_seg = bpm.to_dict_meas()
         # Store info whether the reference or prediction is empty
         dict_seg['EmptyRef'] = bpm.flag_empty_ref
         dict_seg['EmptyPred'] = bpm.flag_empty_pred
         # add the metrics to the output dictionary
-        output_dict[label] = dict_seg
+        metrics_dict[label] = dict_seg
 
         if label == max(unique_labels):
             break       # break to loop to avoid processing the background label ("else" block)
@@ -133,14 +157,73 @@ def main():
     else:
         label = 0
         print(f'Processing label {label} -- both the reference and prediction are empty')
-        bpm = BPM(prediction_data, reference_data, measures=args.metrics)
+        bpm = BPM(prediction_data, reference_data, measures=metrics)
         dict_seg = bpm.to_dict_meas()
 
         # Store info whether the reference or prediction is empty
         dict_seg['EmptyRef'] = bpm.flag_empty_ref
         dict_seg['EmptyPred'] = bpm.flag_empty_pred
         # add the metrics to the output dictionary
-        output_dict[label] = dict_seg
+        metrics_dict[label] = dict_seg
+
+    return metrics_dict
+
+
+def build_output_dataframe(output_list):
+    """
+    Convert JSON data to pandas DataFrame
+    :param output_list: list of dictionaries with metrics
+    :return: pandas DataFrame
+    """
+    rows = []
+    for item in output_list:
+        # Extract all keys except 'reference' and 'prediction' to get labels (e.g. 1.0, 2.0, etc.) dynamically
+        labels = [key for key in item.keys() if key not in ['reference', 'prediction']]
+        for label in labels:
+            metrics = item[label]  # Get the dictionary of metrics
+            # Dynamically add all metrics for the label
+            row = {
+                "reference": item["reference"],
+                "prediction": item["prediction"],
+                "label": label,
+            }
+            # Update row with all metrics dynamically
+            row.update(metrics)
+            rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    return df
+
+
+def main():
+
+    # parse command line arguments
+    parser = get_parser()
+    args = parser.parse_args()
+
+    # Initialize the output JSON
+    output_list = list()
+
+    # Args.prediction and args.reference are paths to folders with multiple nii.gz files (i.e., multiple subjects)
+    if os.path.isdir(args.prediction) and os.path.isdir(args.reference):
+        # Get all files in the directories
+        prediction_files, reference_files = get_images_in_folder(args.prediction, args.reference)
+        # Loop over the subjects
+        for i in range(len(prediction_files)):
+            # Compute metrics for each subject
+            metrics_dict = compute_metrics_single_subject(prediction_files[i], reference_files[i], args.metrics)
+            # Append the output dictionary (representing a single reference-prediction pair per subject) to the
+            # output_list
+            output_list.append(metrics_dict)
+    # Args.prediction and args.reference are paths nii.gz files from a single subject
+    else:
+        metrics_dict = compute_metrics_single_subject(args.prediction, args.reference, args.metrics)
+        # Append the output dictionary (representing a single reference-prediction pair per subject) to the output_list
+        output_list.append(metrics_dict)
+
+    # Convert JSON data to pandas DataFrame
+    df = build_output_dataframe(output_list)
 
     # save dict as json
     fname_output = os.path.abspath(args.output)
