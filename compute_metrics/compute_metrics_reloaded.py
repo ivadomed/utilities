@@ -56,7 +56,7 @@ def get_parser():
     parser.add_argument('-reference', required=True, type=str,
                         help='Path to the folder with nifti images of reference (ground truth) or path to a single '
                              'nifti image of reference (ground truth).')
-    parser.add_argument('-metrics', nargs='+', default=['dsc', 'fbeta', 'nsd', 'vol_diff', 'rel_vol_diff'],
+    parser.add_argument('-metrics', nargs='+', default=['dsc', 'nsd'],
                         required=False,
                         help='List of metrics to compute. For details, '
                              'see: https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/metrics.html. '
