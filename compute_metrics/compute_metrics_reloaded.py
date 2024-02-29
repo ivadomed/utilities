@@ -46,6 +46,7 @@ import argparse
 import json
 import numpy as np
 import nibabel as nib
+import pandas as pd
 
 from MetricsReloaded.metrics.pairwise_measures import BinaryPairwiseMeasures as BPM
 
@@ -66,8 +67,10 @@ def get_parser():
                         help='List of metrics to compute. For details, '
                              'see: https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/metrics.html. '
                              'Default: dsc, nsd')
-    parser.add_argument('-output', type=str, default='metrics.json', required=False,
-                        help='Path to the output JSON file to save the metrics. Default: metrics.json')
+    parser.add_argument('-output', type=str, default='metrics.csv', required=False,
+                        help='Path to the output CSV file to save the metrics. Default: metrics.csv'
+                             'Metrics are additionally saved to a JSON file with the same name but with .json '
+                             'extension.')
 
     return parser
 
@@ -228,10 +231,15 @@ def main():
     # Convert JSON data to pandas DataFrame
     df = build_output_dataframe(output_list)
 
-    # save dict as json
-    fname_output = os.path.abspath(args.output)
+    # save as CSV
+    fname_output_csv = os.path.abspath(args.output)
+    df.to_csv(fname_output_csv, index=False)
+    print(f'Saved metrics to {fname_output_csv}.')
+
+    # save as JSON
+    fname_output = fname_output_csv.replace('.csv', '.json')
     with open(fname_output, 'w') as f:
-        json.dump(output_dict, f, indent=4)
+        json.dump(output_list, f, indent=4)
     print(f'Saved metrics to {fname_output}.')
 
 
