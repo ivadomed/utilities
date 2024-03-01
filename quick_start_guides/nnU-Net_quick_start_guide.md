@@ -12,7 +12,7 @@ Official installation instructions are available [here](https://github.com/MIC-D
 > Always install nnU-Net inside a virtual environment.
 
 > **Note**
-> Run the installation commands on a GPU cluster.
+> Run the installation commands on a GPU cluster, not on your laptop.
 
 You can use either `python -m venv` and `git clone`:
 
@@ -31,22 +31,43 @@ Or `conda`:
 
 ```console
 # create conda env
-conda create --name nnunet
+conda create --name nnunet python=3.9
 conda activate nnunet
 ```
 
-GPU:
+**GPU `conda install`:**
 
 ```console
 # install pytorch using conda - https://pytorch.org/get-started/locally/
-conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install pytorch torchvision pytorch-cuda=12.1 -c pytorch -c nvidia
 # install nnunet
 pip install nnunetv2
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
 
-CPU (for inference only):
+**GPU `pip3 install`:**
+
+```console
+# install pytorch using pip
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install nnunetv2
+# Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
+pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
+```
+
+To verify that your `pytorch` installation supports CUDA, start `python` and run the following commands:
+
+```python
+import torch
+print(torch.cuda.is_available())
+```
+
+This should now return `True`.
+
+ℹ️ If you encounter issues during installation, please report them to [this issue](https://github.com/ivadomed/utilities/issues/45).
+
+**CPU (for inference only):**
 
 ```console
 # install pytorch - https://pytorch.org/get-started/locally/
