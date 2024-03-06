@@ -118,7 +118,7 @@ class TestComputeMetricsReloaded(unittest.TestCase):
 
     def test_non_empty_ref_and_pred(self):
         """
-        Non-empty reference and non-empty prediction
+        Non-empty reference and non-empty prediction with partial overlap
         """
 
         expected_metrics = {'EmptyPred': False,
@@ -132,6 +132,32 @@ class TestComputeMetricsReloaded(unittest.TestCase):
         # Create non-empty reference
         ref = np.zeros((10, 10, 10))
         ref[4:5, 3:6] = 1
+        self.create_dummy_nii(self.ref_file, ref)
+        # Create non-empty prediction
+        pred = np.zeros((10, 10, 10))
+        pred[4:8, 2:5] = 1
+        self.create_dummy_nii(self.pred_file, pred)
+        # Compute metrics
+        metrics_dict = compute_metrics_single_subject(self.pred_file.name, self.ref_file.name, self.metrics)
+        # Assert metrics
+        self.assert_metrics(metrics_dict, expected_metrics)
+
+    def test_non_empty_ref_and_pred_with_full_overlap(self):
+        """
+        Non-empty reference and non-empty prediction with full overlap
+        """
+
+        expected_metrics = {'EmptyPred': False,
+                            'EmptyRef': False,
+                            'dsc': 1.0,
+                            'fbeta': 1.0,
+                            'nsd': 1.0,
+                            'rel_vol_error': 0.0,
+                            'vol_diff': 0.0}
+
+        # Create non-empty reference
+        ref = np.zeros((10, 10, 10))
+        ref[4:8, 2:5] = 1
         self.create_dummy_nii(self.ref_file, ref)
         # Create non-empty prediction
         pred = np.zeros((10, 10, 10))
