@@ -46,20 +46,10 @@ The script is compatible with both binary and multi-class segmentation tasks (e.
 
 The metrics are computed for each unique label (class) in the reference (ground truth) image.
 
-The output is saved to a JSON file, for example:
+The output is saved to a CSV file, for example:
 
-```json
-{
-    "reference": "sub-001_T2w_seg.nii.gz",
-    "prediction": "sub-001_T2w_prediction.nii.gz",
-    "1.0": {
-        "dsc": 0.8195991091314031,
-        "nsd": 0.9455782312925171
-    },
-    "2.0": {
-        "dsc": 0.8042553191489362,
-        "nsd": 0.9580573951434879
-    }
-
-}
+```csv
+reference   prediction	label	dsc	fbeta	nsd	vol_diff	rel_vol_diff	EmptyRef	EmptyPred
+seg.nii.gz	pred.nii.gz	1.0	0.819	0.819	0.945	0.105	-10.548	False	False
+seg.nii.gz	pred.nii.gz	2.0	0.743	0.743	0.923	0.121	-11.423	False	False
 ```
