@@ -53,13 +53,13 @@ class TestComputeMetricsReloaded(unittest.TestCase):
         Empty reference and empty prediction
         """
 
-        expected_metrics = {'EmptyPred': True,
-                            'EmptyRef': True,
-                            'dsc': 1,
-                            'fbeta': 1,
-                            'nsd': np.nan,
-                            'rel_vol_error': 0,
-                            'vol_diff': np.nan}
+        expected_metrics = {1.0: {'EmptyPred': True,
+                                  'EmptyRef': True,
+                                  'dsc': 1,
+                                  'fbeta': 1,
+                                  'nsd': np.nan,
+                                  'rel_vol_error': 0,
+                                  'vol_diff': np.nan}}
 
         # Create empty reference
         self.create_dummy_nii(self.ref_file, np.zeros((10, 10, 10)))
@@ -75,13 +75,13 @@ class TestComputeMetricsReloaded(unittest.TestCase):
         Empty reference and non-empty prediction
         """
 
-        expected_metrics = {'EmptyPred': False,
-                            'EmptyRef': True,
-                            'dsc': 0.0,
-                            'fbeta': 0,
-                            'nsd': 0.0,
-                            'rel_vol_error': 100,
-                            'vol_diff': np.inf}
+        expected_metrics = {1.0: {'EmptyPred': False,
+                                  'EmptyRef': True,
+                                  'dsc': 0.0,
+                                  'fbeta': 0,
+                                  'nsd': 0.0,
+                                  'rel_vol_error': 100,
+                                  'vol_diff': np.inf}}
 
         # Create empty reference
         self.create_dummy_nii(self.ref_file, np.zeros((10, 10, 10)))
@@ -99,13 +99,13 @@ class TestComputeMetricsReloaded(unittest.TestCase):
         Non-empty reference and empty prediction
         """
 
-        expected_metrics = {'EmptyPred': True,
-                            'EmptyRef': False,
-                            'dsc': 0.0,
-                            'fbeta': 0,
-                            'nsd': 0.0,
-                            'rel_vol_error': -100.0,
-                            'vol_diff': 1.0}
+        expected_metrics = {1.0: {'EmptyPred': True,
+                                  'EmptyRef': False,
+                                  'dsc': 0.0,
+                                  'fbeta': 0,
+                                  'nsd': 0.0,
+                                  'rel_vol_error': -100.0,
+                                  'vol_diff': 1.0}}
 
         # Create non-empty reference
         ref = np.zeros((10, 10, 10))
@@ -123,13 +123,13 @@ class TestComputeMetricsReloaded(unittest.TestCase):
         Non-empty reference and non-empty prediction with partial overlap
         """
 
-        expected_metrics = {'EmptyPred': False,
-                            'EmptyRef': False,
-                            'dsc': 0.26666666666666666,
-                            'fbeta': 0.26666667461395266,
-                            'nsd': 0.5373134328358209,
-                            'rel_vol_error': 300.0,
-                            'vol_diff': 3.0}
+        expected_metrics = {1.0: {'EmptyPred': False,
+                                  'EmptyRef': False,
+                                  'dsc': 0.26666666666666666,
+                                  'fbeta': 0.26666667461395266,
+                                  'nsd': 0.5373134328358209,
+                                  'rel_vol_error': 300.0,
+                                  'vol_diff': 3.0}}
 
         # Create non-empty reference
         ref = np.zeros((10, 10, 10))
@@ -185,13 +185,13 @@ class TestComputeMetricsReloaded(unittest.TestCase):
         Non-empty reference and non-empty prediction with full overlap
         """
 
-        expected_metrics = {'EmptyPred': False,
-                            'EmptyRef': False,
-                            'dsc': 1.0,
-                            'fbeta': 1.0,
-                            'nsd': 1.0,
-                            'rel_vol_error': 0.0,
-                            'vol_diff': 0.0}
+        expected_metrics = {1.0: {'EmptyPred': False,
+                                  'EmptyRef': False,
+                                  'dsc': 1.0,
+                                  'fbeta': 1.0,
+                                  'nsd': 1.0,
+                                  'rel_vol_error': 0.0,
+                                  'vol_diff': 0.0}}
 
         # Create non-empty reference
         ref = np.zeros((10, 10, 10))
