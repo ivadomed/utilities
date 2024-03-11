@@ -1,4 +1,6 @@
-# Based on https://github.com/spinalcordtoolbox/disc-labeling-hourglass
+"""
+Script copied from https://github.com/spinalcordtoolbox/disc-labeling-hourglass
+"""
 
 import os
 import argparse
@@ -7,10 +9,7 @@ import json
 import itertools
 import numpy as np
 
-from utils import CONTRAST, get_img_path_from_mask_path, fetch_contrast
-
-
-CONTRAST_LOOKUP = {tuple(sorted(value)): key for key, value in CONTRAST.items()}
+from utils import get_img_path_from_mask_path, get_cont_path_from_other_cont, fetch_contrast, fetch_subject_and_session
 
 
 # Determine specified contrasts
@@ -26,10 +25,17 @@ def init_data_config(args):
     file_paths = [os.path.abspath(path.replace('\n', '')) for path in open(args.txt)]
     if args.type == 'LABEL':
         label_paths = file_paths
-        img_paths = [get_img_path_from_mask_path(lp) for lp in label_paths]
+        img_paths = [get_img_path_from_label_path(lp) for lp in label_paths]
         file_paths = label_paths + img_paths
     elif args.type == 'IMAGE':
         img_paths = file_paths
+    elif args.type == 'CONTRAST':
+        if not args.cont: # If the target contrast is not specified
+            raise ValueError(f'When using the type CONTRAST, please specify the target contrast using the flag "--cont"')
+        img_paths = file_paths
+        new_contrast = args.cont
+        label_paths = [get_cont_path_from_other_cont(ip) for ip in img_paths]
+        file_paths = label_paths + img_paths
     else:
         raise ValueError(f"invalid args.type: {args.type}")
     missing_paths = [
@@ -50,13 +56,17 @@ def init_data_config(args):
         raise ValueError('Please store all the BIDS datasets inside the same parent folder !')
 
     # Look up the right code for the set of contrasts present
-    contrasts = CONTRAST_LOOKUP[tuple(sorted(set(map(fetch_contrast, img_paths))))]
+    contrasts = "_".join(tuple(sorted(set(map(fetch_contrast, img_paths)))))
 
     config = {
         'TYPE': args.type,
         'CONTRASTS': contrasts,
         'DATASETS_PATH': dataset_parent_path
     }
+
+    # Add target contrast when the type CONTRAST is used
+    if args.type == 'CONTRAST':
+        config['TARGET_CONTRAST'] = args.cont
 
     # Split into training, validation, and testing sets
     split_ratio = (1 - (args.split_validation + args.split_test), args.split_validation, args.split_test) # TRAIN, VALIDATION, and TEST
@@ -91,8 +101,10 @@ if __name__ == '__main__':
     ## Parameters
     parser.add_argument('--txt', required=True,
                         help='Path to TXT file that contains only image or label paths. (Required)')
-    parser.add_argument('--type', choices=('LABEL', 'IMAGE'),
-                        help='Type of paths specified. Choices "LABEL" or "IMAGE". (Required)')
+    parser.add_argument('--type', choices=('LABEL', 'IMAGE', 'CONTRAST'),
+                        help='Type of paths specified. Choices are "LABEL", "IMAGE" or "CONTRAST". (Required)')
+    parser.add_argument('--cont', type=str, default='',
+                        help='If the type CONTRAST is selected, this variable specifies the wanted contrast for target.')
     parser.add_argument('--split-validation', type=float, default=0.1,
                         help='Split ratio for validation. Default=0.1')
     parser.add_argument('--split-test', type=float, default=0.1,
