@@ -83,7 +83,7 @@ def get_mask_path_from_img_path(img_path, deriv_sub_folders, short_suffix='_seg'
             paths = glob.glob(deriv_path + filename.split(ext)[0] + "*" + short_suffix + "*" + ext)
 
         if len(paths) > 1:
-            print(f'Image {img_path} has multiple masks\n: {'\n'.join(paths)}')
+            print(f'Image {img_path} has multiple masks\n: {"\n".join(paths)}')
         elif len(paths) == 1:
             mask_path.append(paths[0])
     return mask_path
