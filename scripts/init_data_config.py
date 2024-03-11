@@ -25,7 +25,7 @@ def init_data_config(args):
     file_paths = [os.path.abspath(path.replace('\n', '')) for path in open(args.txt)]
     if args.type == 'LABEL':
         label_paths = file_paths
-        img_paths = [get_img_path_from_label_path(lp) for lp in label_paths]
+        img_paths = [get_img_path_from_mask_path(lp) for lp in label_paths]
         file_paths = label_paths + img_paths
     elif args.type == 'IMAGE':
         img_paths = file_paths
