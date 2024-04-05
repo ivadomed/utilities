@@ -78,6 +78,12 @@ pip install nnunetv2
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
 
+To upgrade nnunetv2 to the latest version, you can run the following command in your virtual env:
+
+```console
+pip install --upgrade nnunetv2
+```
+
 ## Environment variables
 
 For details, see [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md#linux--macos).
