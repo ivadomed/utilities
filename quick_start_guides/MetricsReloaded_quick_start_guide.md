@@ -1,14 +1,17 @@
 # MetricsReloaded quick-start guide
 
 Useful links:
-- [MetricsReloaded GitHub page](https://github.com/Project-MONAI/MetricsReloaded)
 - [MetricsReloaded documentation](https://metricsreloaded.readthedocs.io/en/latest/)
 - [MetricsReloaded publication](https://www.nature.com/articles/s41592-023-02151-z)
 - [MetricsReloaded preprint](https://arxiv.org/pdf/2206.01653v5.pdf) - preprint contains more figures than the publication
 
 ## Installation
 
-Official installation instructions are available [here](https://github.com/Project-MONAI/MetricsReloaded?tab=readme-ov-file#installation).
+The installation instructions are available [here](https://github.com/ivadomed/MetricsReloaded?tab=readme-ov-file#installation).
+
+> **Note**
+> Note that we use an ivadomed fork.
+
 
 > **Note**
 > Always install MetricsReloaded inside a virtual environment.
@@ -20,7 +23,7 @@ conda activate metrics_reloaded
 
 # Clone the repository
 cd ~/code
-git clone https://github.com/csudre/MetricsReloaded.git
+git clone https://github.com/ivadomed/MetricsReloaded
 cd MetricsReloaded
 
 # Install the package

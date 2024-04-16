@@ -1,6 +1,6 @@
 """
 Compute MetricsReloaded metrics for segmentation tasks.
-Details: https://github.com/Project-MONAI/MetricsReloaded/tree/main
+Details:  https://github.com/ivadomed/MetricsReloaded
 
 Example usage (single reference-prediction pair):
     python compute_metrics_reloaded.py
