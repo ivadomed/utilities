@@ -1,3 +1,7 @@
+'''
+This script loops on a config file (see init_data_config.py) to calculate metrics (.csv) and generate plots.
+'''
+
 import os
 import argparse
 import json

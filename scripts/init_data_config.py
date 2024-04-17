@@ -1,4 +1,6 @@
 """
+Generate a config file with all the paths to the used files.
+See https://github.com/spinalcordtoolbox/disc-labeling-hourglass/issues/25#issuecomment-1695818382
 Script copied from https://github.com/spinalcordtoolbox/disc-labeling-hourglass
 """
 
