@@ -119,11 +119,12 @@ def extract_discs_label(label, mapping):
     discs_list = closest_point_seg_to_line(data_discs_seg, centerline_shifted, discs_bb)
 
     # Add disc 2 between disc 1 and 3
-    disc1_coord = discs_list[discs_list[:,-1]==1]
-    disc2_coord = discs_list[discs_list[:,-1]==3]
-    disc2_coord[0,1] = (disc2_coord[0,1] + disc1_coord[0,1])//2
-    disc2_coord[0,-1] = 2
-    discs_list = np.insert(discs_list, 1, disc2_coord, axis=0)
+    if 1 and 3 in discs_list[:,-1]:
+        disc1_coord = discs_list[discs_list[:,-1]==1]
+        disc2_coord = discs_list[discs_list[:,-1]==3]
+        disc2_coord[0,1] = (disc2_coord[0,1] + disc1_coord[0,1])//2
+        disc2_coord[0,-1] = 2
+        discs_list = np.insert(discs_list, 1, disc2_coord, axis=0)
 
     # Create output Image
     data_discs = np.zeros_like(data)
