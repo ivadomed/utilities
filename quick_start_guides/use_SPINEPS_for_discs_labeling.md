@@ -10,19 +10,19 @@ SPINEPS is an automatic method for vertebral labeling of the spine on T1w and T2
 
 1. First, create a conda environment with python 3.11.
 
-```console
+```bash
 conda create --name spineps python=3.11
 conda activate spineps
 conda install pip
 ```
 
 2. Clone this repository
-```
+```bash
 git clone git@github.com:ivadomed/utilities.git
 ```
 
 3. Run this command or add it directly to your `.bashrc` or `.zshrc` (generally at the root of your home folder)
-```console
+```bash
 export IVADOMED_UTILITIES_REPO=<PATH-to-UTILITIES>
 ```
 
@@ -43,18 +43,18 @@ Then, you need to install [SPINEPS](https://github.com/Hendrik-code/spineps) in 
 1. Install the correct version of [pytorch](https://pytorch.org/get-started/locally/) in you environment.
 
 2. Confirm that your pytorch package is working! Try calling these command:
-```console
+```bash
 nvidia-smi 
 ```
 This should show the usage of your GPUs return `True`.
-```console
+```bash
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 This should return `True`.
 
 3. Clone spineps and install it:
 > Note: You can also clone using the http adress: https://github.com/Hendrik-code/spineps.git
-```console
+```bash
 git clone git@github.com:Hendrik-code/spineps.git
 cd spineps
 pip install -e .
@@ -67,25 +67,25 @@ pip install -e .
     - T1w labeling [T1w_Segmentor.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/T1w_Segmentor.zip)
 
 6. Make a directory and move all the weights in the folder `<PATH-to-SPINEPS>/spineps/models`:
-```
+```bash
 mkdir spineps/models
 cd ..
 ```
 
 7. Run this command or add it directly to your `.bashrc` or `.zshrc` (generally at the root of your home folder)
-```console
+```bash
 export SPINEPS_SEGMENTOR_MODELS=<PATH-to-SPINEPS>/spineps/models
 ```
 
 ## Discs labeling function
 
 After the installation, you should have 2 repositories in your current folder (`spineps` and `utilities`):
-```console
+```bash
 ls
 ```
 
 Finally to compute discs labeling with SPINEPS, you need to add this function to any bash script:
-```console
+```bash
 label_with_spineps(){
     local img_path=$(realpath "$1")
     local out_path="$2"
@@ -130,7 +130,7 @@ label_with_spineps(){
 ## Usage
 
 You can now call this function:
-```
+```bash
 label_with_spineps "$IMG_PATH" "$OUT_PATH" "$CONTRAST"
 ```
 With:
