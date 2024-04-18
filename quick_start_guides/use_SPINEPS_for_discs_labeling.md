@@ -79,9 +79,9 @@ export SPINEPS_SEGMENTOR_MODELS=<PATH-to-SPINEPS>/spineps/models
 
 ## Discs labeling function
 
-After the installation, you should have 2 repositories in your current folder:
+After the installation, you should have 2 repositories in your current folder (`spineps` and `utilities`):
 ```console
-ls # spineps utilities
+ls
 ```
 
 Finally to compute discs labeling with SPINEPS, you need to add this function to any bash script:
