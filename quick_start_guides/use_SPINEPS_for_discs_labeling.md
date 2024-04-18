@@ -31,7 +31,7 @@ export IVADOMED_UTILITIES_REPO=<PATH-to-UTILITIES>
 
 ### SPINEPS installation
 
-Then, you need to install [SPINEPS](https://github.com/Hendrik-code/spineps) in a new virtual environment.
+Then, you need to install [SPINEPS](https://github.com/Hendrik-code/spineps) in the same virtual environment.
 
 > **Note**
 > For this step you can also follow the official installation [here](https://github.com/Hendrik-code/spineps#installation-ubuntu)
