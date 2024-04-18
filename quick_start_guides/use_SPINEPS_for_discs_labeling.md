@@ -16,7 +16,7 @@ conda activate spineps
 conda install pip
 ```
 
-2. Clone and install discs labeling requirements
+2. Clone this repository
 ```
 git clone git@github.com:ivadomed/utilities.git
 ```
@@ -26,7 +26,7 @@ git clone git@github.com:ivadomed/utilities.git
 export IVADOMED_UTILITIES_REPO=<PATH-to-UTILITIES>
 ```
 
-> You can run `export IVADOMED_UTILITIES_REPO="$(pwd)/utilities"` after the last step
+> You can also run `export IVADOMED_UTILITIES_REPO="$(pwd)/utilities"` after the last step
 
 
 ### SPINEPS installation
