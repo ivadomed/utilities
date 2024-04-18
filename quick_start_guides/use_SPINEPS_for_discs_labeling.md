@@ -101,7 +101,7 @@ label_with_spineps(){
         cp "$img_path" "$tmp_img_path"
 
         # Activate conda env
-        source /usr/local/miniforge3/etc/profile.d/conda.sh
+        eval "$(conda shell.bash hook)"
         conda activate spineps
 
         # Select semantic weights
