@@ -60,11 +60,11 @@ cd spineps
 pip install -e .
 ```
 
-4. Dowload spineps' weights [Inst_Vertebra_2.0.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/Inst_Vertebra_2.0.zip)
+4. Dowload spineps' first weights [Inst_Vertebra_2.0.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/Inst_Vertebra_2.0.zip)
 
-5. For:
-    - T2w labeling download [T2w_Segmentor_2.0.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/T2w_Segmentor_2.0.zip)
-    - T1w labeling download [T1w_Segmentor.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/T1w_Segmentor.zip)
+5. Then download for:
+    - T2w labeling [T2w_Segmentor_2.0.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/T2w_Segmentor_2.0.zip)
+    - T1w labeling [T1w_Segmentor.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/T1w_Segmentor.zip)
 
 6. Make a directory and move all the weights in the folder `<PATH-to-SPINEPS>/spineps/models`:
 ```
