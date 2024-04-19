@@ -60,7 +60,7 @@ cd spineps
 pip install -e .
 ```
 
-4. Dowload spineps' first weights [Inst_Vertebra_2.0.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/Inst_Vertebra_2.0.zip)
+4. Dowload spineps' first weights [Inst_Vertebra_3.0.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/Inst_Vertebra_3.0.zip)
 
 5. Then download for:
     - T2w labeling [T2w_Segmentor_2.0.zip](https://syncandshare.lrz.de/dl/fi16bYYmqpwPQZRGd1M4G6/T2w_Segmentor_2.0.zip)
@@ -111,7 +111,7 @@ label_with_spineps(){
         fi
         
         # Run SPINEPS on image
-        spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_2.0 -dn derivatives
+        spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_3.0 -dn derivatives
         
         # Run vertebral labeling with SPINEPS vertebrae prediction
         vert_path="$(echo ${tmpdir}/derivatives/*_seg-vert_msk.nii.gz)"
