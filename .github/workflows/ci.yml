@@ -36,7 +36,6 @@ jobs:
           pip install -r dataset_conversion/requirements.txt
           git clone https://github.com/ivadomed/MetricsReloaded.git
           cd MetricsReloaded
-          git checkout jv/add_rel_vol_error_metric
           python -m pip install .
 
       - name: Run tests with unittest
