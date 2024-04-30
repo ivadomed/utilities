@@ -66,11 +66,11 @@ def get_parser():
     parser.add_argument('-reference', required=True, type=str,
                         help='Path to the folder with nifti images of reference (ground truth) or path to a single '
                              'nifti image of reference (ground truth).')
-    parser.add_argument('-metrics', nargs='+', default=['dsc', 'nsd'],
+    parser.add_argument('-metrics', nargs='+', default=['dsc', 'fbeta', 'nsd', 'vol_diff', 'rel_vol_error'],
                         required=False,
                         help='List of metrics to compute. For details, '
                              'see: https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/metrics.html. '
-                             'Default: dsc, nsd')
+                             'Default: dsc, fbeta, nsd, vol_diff, rel_vol_error')
     parser.add_argument('-output', type=str, default='metrics.csv', required=False,
                         help='Path to the output CSV file to save the metrics. Default: metrics.csv')
 
