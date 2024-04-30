@@ -34,7 +34,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r dataset_conversion/requirements.txt
+          git clone https://github.com/ivadomed/MetricsReloaded.git
+          cd MetricsReloaded
+          python -m pip install .
 
       - name: Run tests with unittest
         run: |
           python -m unittest tests/test_convert_bids_to_nnUNetV2.py
+          python -m unittest tests/test_compute_metrics_reloaded.py
