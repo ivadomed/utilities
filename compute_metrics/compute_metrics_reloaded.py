@@ -47,11 +47,11 @@ from MetricsReloaded.metrics.pairwise_measures import BinaryPairwiseMeasures as 
 
 METRICS_TO_NAME = {
     'dsc': 'Dice similarity coefficient (DSC)',
-    'hd': 'Hausdorff distance',
-    'fbeta': 'FBeta score',
+    'hd': 'Hausdorff distance (HD95)',
+    'fbeta': 'F1 score',
     'nsd': 'Normalized surface distance (NSD)',
     'vol_diff': 'Volume difference',
-    'rel_vol_diff': 'Relative volume error (RVE)',
+    'rel_vol_error': 'Relative volume error (RVE)',
 }
 
 
