@@ -234,17 +234,22 @@ def main():
     # Convert JSON data to pandas DataFrame
     df = build_output_dataframe(output_list)
 
+    # Compute mean and standard deviation of metrics across all subjects
+    df_mean = (df.drop(columns=['reference', 'prediction', 'EmptyRef', 'EmptyPred']).groupby('label').
+               agg(['mean', 'std']).reset_index())
+
     # Rename columns
     df.rename(columns={metric: METRICS_TO_NAME[metric] for metric in METRICS_TO_NAME}, inplace=True)
+    df_mean.rename(columns={metric: METRICS_TO_NAME[metric] for metric in METRICS_TO_NAME}, inplace=True)
+
+    # format output up to 3 decimal places
+    df = df.round(3)
+    df_mean = df_mean.round(3)
 
     # save as CSV
     fname_output_csv = os.path.abspath(args.output)
     df.to_csv(fname_output_csv, index=False)
     print(f'Saved metrics to {fname_output_csv}.')
-
-    # Compute mean and standard deviation of metrics across all subjects
-    df_mean = (df.drop(columns=['reference', 'prediction', 'EmptyRef', 'EmptyPred']).groupby('label').
-               agg(['mean', 'std']).reset_index())
 
     # save as CSV
     fname_output_csv_mean = os.path.abspath(args.output.replace('.csv', '_mean.csv'))
