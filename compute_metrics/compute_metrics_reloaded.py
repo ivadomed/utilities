@@ -230,7 +230,7 @@ def main():
             # Append the output dictionary (representing a single reference-prediction pair per subject) to the
             # output_list
             output_list.append(metrics_dict)
-    # Args.prediction and args.reference are paths nii.gz files from a single subject
+    # Args.prediction and args.reference are paths nii.gz files from a SINGLE subject
     else:
         metrics_dict = compute_metrics_single_subject(args.prediction, args.reference, args.metrics)
         # Append the output dictionary (representing a single reference-prediction pair per subject) to the output_list
