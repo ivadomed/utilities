@@ -1,36 +1,36 @@
 """
 Compute MetricsReloaded metrics for segmentation tasks.
-Details:  https://github.com/ivadomed/MetricsReloaded
+
+For MetricsReloaded installation and usage of this script, see:
+https://github.com/ivadomed/utilities/blob/main/quick_start_guides/MetricsReloaded_quick_start_guide.md
 
 Example usage (single reference-prediction pair):
     python compute_metrics_reloaded.py
         -reference sub-001_T2w_seg.nii.gz
         -prediction sub-001_T2w_prediction.nii.gz
 
-Example usage (multiple reference-prediction pairs):
+Example usage (multiple reference-prediction pairs, e.g., multiple subjects in the dataset):
     python compute_metrics_reloaded.py
         -reference /path/to/reference
         -prediction /path/to/prediction
 
-Default metrics (semantic segmentation):
-    - Dice similarity coefficient (DSC)
-    - Normalized surface distance (NSD)
-(for details, see Fig. 2, Fig. 11, and Fig. 12 in https://arxiv.org/abs/2206.01653v5)
+The metrics to be computed can be specified using the `-metrics` argument. For example, to compute only the Dice
+similarity coefficient (DSC) and Normalized surface distance (NSD), use:
+    python compute_metrics_reloaded.py
+        -reference sub-001_T2w_seg.nii.gz
+        -prediction sub-001_T2w_prediction.nii.gz
+        -metrics dsc nsd
 
-Dice similarity coefficient (DSC):
-- Fig. 65 in https://arxiv.org/pdf/2206.01653v5.pdf
-- https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.dsc
-Normalized surface distance (NSD):
-- Fig. 86 in https://arxiv.org/pdf/2206.01653v5.pdf
-- https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.normalised_surface_distance
+See https://arxiv.org/abs/2206.01653v5 for nice figures explaining the metrics!
+
+The output is saved to a CSV file, for example:
+
+reference   prediction	label	dsc nsd	EmptyRef	EmptyPred
+seg.nii.gz	pred.nii.gz	1.0	0.819	0.945   False	False
+seg.nii.gz	pred.nii.gz	2.0	0.743	0.923   False	False
 
 The script is compatible with both binary and multi-class segmentation tasks (e.g., nnunet region-based).
 The metrics are computed for each unique label (class) in the reference (ground truth) image.
-The output is saved to a CSV file, for example:
-
-reference	prediction	label	dsc	fbeta	nsd	vol_diff	rel_vol_diff	EmptyRef	EmptyPred
-seg.nii.gz	pred.nii.gz	1.0	0.819	0.819	0.945	0.105	-10.548	False	False
-seg.nii.gz	pred.nii.gz	2.0	0.743	0.743	0.923	0.121	-11.423	False	False
 
 Authors: Jan Valosek
 """
@@ -122,7 +122,9 @@ def compute_metrics_single_subject(prediction, reference, metrics):
     :param metrics: list of metrics to compute
     """
     # load nifti images
-    print(f'Processing Pred: {os.path.basename(prediction)}\t Reference: {os.path.basename(reference)}')
+    print(f'Processing...')
+    print(f'\tPrediction: {os.path.basename(prediction)}')
+    print(f'\tReference: {os.path.basename(reference)}')
     prediction_data = load_nifti_image(prediction)
     reference_data = load_nifti_image(reference)
 
@@ -148,7 +150,7 @@ def compute_metrics_single_subject(prediction, reference, metrics):
     # loop over all unique labels
     for label in unique_labels:
         # create binary masks for the current label
-        print(f'Processing label {label}')
+        print(f'\tLabel {label}')
         prediction_data_label = np.array(prediction_data == label, dtype=float)
         reference_data_label = np.array(reference_data == label, dtype=float)
 
@@ -165,7 +167,7 @@ def compute_metrics_single_subject(prediction, reference, metrics):
     # Special case when both the reference and prediction images are empty
     else:
         label = 1
-        print(f'Processing label {label} -- both the reference and prediction are empty')
+        print(f'\tLabel {label} -- both the reference and prediction are empty')
         bpm = BPM(prediction_data, reference_data, measures=metrics)
         dict_seg = bpm.to_dict_meas()
 
@@ -214,7 +216,10 @@ def main():
     # Initialize a list to store the output dictionaries (representing a single reference-prediction pair per subject)
     output_list = list()
 
-    # Args.prediction and args.reference are paths to folders with multiple nii.gz files (i.e., multiple subjects)
+    # Print the metrics to be computed
+    print(f'Computing metrics: {args.metrics}')
+
+    # Args.prediction and args.reference are paths to folders with multiple nii.gz files (i.e., MULTIPLE subjects)
     if os.path.isdir(args.prediction) and os.path.isdir(args.reference):
         # Get all files in the directories
         prediction_files, reference_files = get_images_in_folder(args.prediction, args.reference)
@@ -225,7 +230,7 @@ def main():
             # Append the output dictionary (representing a single reference-prediction pair per subject) to the
             # output_list
             output_list.append(metrics_dict)
-    # Args.prediction and args.reference are paths nii.gz files from a single subject
+    # Args.prediction and args.reference are paths nii.gz files from a SINGLE subject
     else:
         metrics_dict = compute_metrics_single_subject(args.prediction, args.reference, args.metrics)
         # Append the output dictionary (representing a single reference-prediction pair per subject) to the output_list
