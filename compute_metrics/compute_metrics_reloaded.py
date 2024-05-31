@@ -52,6 +52,9 @@ METRICS_TO_NAME = {
     'nsd': 'Normalized surface distance (NSD)',
     'vol_diff': 'Volume difference',
     'rel_vol_error': 'Relative volume error (RVE)',
+    'lesion_ppv': 'Lesion wise positive predictive value (PPV)',
+    'lesion_sensitivity': 'Lesion wise sensitivity',
+    'lesion_f1_score': 'Lesion wise F1 score',
 }
 
 
