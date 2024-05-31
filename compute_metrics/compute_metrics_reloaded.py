@@ -1,13 +1,15 @@
 """
 Compute MetricsReloaded metrics for segmentation tasks.
-Details:  https://github.com/ivadomed/MetricsReloaded
+
+For MetricsReloaded installation and usage of this script, see:
+https://github.com/ivadomed/utilities/blob/main/quick_start_guides/MetricsReloaded_quick_start_guide.md
 
 Example usage (single reference-prediction pair):
     python compute_metrics_reloaded.py
         -reference sub-001_T2w_seg.nii.gz
         -prediction sub-001_T2w_prediction.nii.gz
 
-Example usage (multiple reference-prediction pairs):
+Example usage (multiple reference-prediction pairs, e.g., multiple subjects in the dataset):
     python compute_metrics_reloaded.py
         -reference /path/to/reference
         -prediction /path/to/prediction
@@ -17,20 +19,16 @@ Default metrics (semantic segmentation):
     - Normalized surface distance (NSD)
 (for details, see Fig. 2, Fig. 11, and Fig. 12 in https://arxiv.org/abs/2206.01653v5)
 
-Dice similarity coefficient (DSC):
-- Fig. 65 in https://arxiv.org/pdf/2206.01653v5.pdf
-- https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.dsc
-Normalized surface distance (NSD):
-- Fig. 86 in https://arxiv.org/pdf/2206.01653v5.pdf
-- https://metricsreloaded.readthedocs.io/en/latest/reference/metrics/pairwise_measures.html#MetricsReloaded.metrics.pairwise_measures.BinaryPairwiseMeasures.normalised_surface_distance
+See https://arxiv.org/abs/2206.01653v5 for nice figures explaining the metrics!
+
+The output is saved to a CSV file, for example:
+
+reference   prediction	label	dsc nsd	EmptyRef	EmptyPred
+seg.nii.gz	pred.nii.gz	1.0	0.819	0.945   False	False
+seg.nii.gz	pred.nii.gz	2.0	0.743	0.923   False	False
 
 The script is compatible with both binary and multi-class segmentation tasks (e.g., nnunet region-based).
 The metrics are computed for each unique label (class) in the reference (ground truth) image.
-The output is saved to a CSV file, for example:
-
-reference	prediction	label	dsc	fbeta	nsd	vol_diff	rel_vol_diff	EmptyRef	EmptyPred
-seg.nii.gz	pred.nii.gz	1.0	0.819	0.819	0.945	0.105	-10.548	False	False
-seg.nii.gz	pred.nii.gz	2.0	0.743	0.743	0.923	0.121	-11.423	False	False
 
 Authors: Jan Valosek
 """
