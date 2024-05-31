@@ -122,7 +122,9 @@ def compute_metrics_single_subject(prediction, reference, metrics):
     :param metrics: list of metrics to compute
     """
     # load nifti images
-    print(f'Processing Pred: {os.path.basename(prediction)}\t Reference: {os.path.basename(reference)}')
+    print(f'Processing...')
+    print(f'\tPrediction: {os.path.basename(prediction)}')
+    print(f'\tReference: {os.path.basename(reference)}')
     prediction_data = load_nifti_image(prediction)
     reference_data = load_nifti_image(reference)
 
@@ -148,7 +150,7 @@ def compute_metrics_single_subject(prediction, reference, metrics):
     # loop over all unique labels
     for label in unique_labels:
         # create binary masks for the current label
-        print(f'Processing label {label}')
+        print(f'\tLabel {label}')
         prediction_data_label = np.array(prediction_data == label, dtype=float)
         reference_data_label = np.array(reference_data == label, dtype=float)
 
@@ -165,7 +167,7 @@ def compute_metrics_single_subject(prediction, reference, metrics):
     # Special case when both the reference and prediction images are empty
     else:
         label = 1
-        print(f'Processing label {label} -- both the reference and prediction are empty')
+        print(f'\tLabel {label} -- both the reference and prediction are empty')
         bpm = BPM(prediction_data, reference_data, measures=metrics)
         dict_seg = bpm.to_dict_meas()
 
@@ -214,7 +216,10 @@ def main():
     # Initialize a list to store the output dictionaries (representing a single reference-prediction pair per subject)
     output_list = list()
 
-    # Args.prediction and args.reference are paths to folders with multiple nii.gz files (i.e., multiple subjects)
+    # Print the metrics to be computed
+    print(f'Computing metrics: {args.metrics}')
+
+    # Args.prediction and args.reference are paths to folders with multiple nii.gz files (i.e., MULTIPLE subjects)
     if os.path.isdir(args.prediction) and os.path.isdir(args.reference):
         # Get all files in the directories
         prediction_files, reference_files = get_images_in_folder(args.prediction, args.reference)
