@@ -14,10 +14,12 @@ Example usage (multiple reference-prediction pairs, e.g., multiple subjects in t
         -reference /path/to/reference
         -prediction /path/to/prediction
 
-Default metrics (semantic segmentation):
-    - Dice similarity coefficient (DSC)
-    - Normalized surface distance (NSD)
-(for details, see Fig. 2, Fig. 11, and Fig. 12 in https://arxiv.org/abs/2206.01653v5)
+The metrics to be computed can be specified using the `-metrics` argument. For example, to compute only the Dice
+similarity coefficient (DSC) and Normalized surface distance (NSD), use:
+    python compute_metrics_reloaded.py
+        -reference sub-001_T2w_seg.nii.gz
+        -prediction sub-001_T2w_prediction.nii.gz
+        -metrics dsc nsd
 
 See https://arxiv.org/abs/2206.01653v5 for nice figures explaining the metrics!
 
