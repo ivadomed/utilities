@@ -2,21 +2,16 @@
 
 ## Installation
 
-The installation instructions are available [here](https://github.com/ivadomed/MetricsReloaded?tab=readme-ov-file#installation).
+ℹ️ Note that we use the [ivadomed fork](https://github.com/ivadomed/MetricsReloaded) of the MetricsReloaded repository.
 
-> **Note**
-> Note that we use an ivadomed fork.
-
-
-> **Note**
-> Always install MetricsReloaded inside a virtual environment.
+⚠️ Always install MetricsReloaded inside a virtual environment:
 
 ```
 # Create and activate a new conda environment
 conda create -n metrics_reloaded python=3.10 pip
 conda activate metrics_reloaded
 
-# Clone the repository
+# Clone the MetricsReloaded repository (ivadomed fork)
 cd ~/code
 git clone https://github.com/ivadomed/MetricsReloaded
 cd MetricsReloaded
@@ -27,6 +22,8 @@ python -m pip install .
 python -m pip install -e .
 ```
 
+The installation instructions are available also [here](https://github.com/ivadomed/MetricsReloaded?tab=readme-ov-file#installation).
+
 ## Usage
 
 You can use the [compute_metrics_reloaded.py](../compute_metrics/compute_metrics_reloaded.py) wrapper script to compute metrics using the MetricsReloaded package.
@@ -34,13 +31,14 @@ You can use the [compute_metrics_reloaded.py](../compute_metrics/compute_metrics
 To download the script, run:
 
 ```commandline
+cd ~/code
 git clone https://github.com/ivadomed/utilities.git
 cd utilities/compute_metrics
 conda activate metrics_reloaded
 python compute_metrics_reloaded.py -h
 ```
 
-Examples:
+Example usage:
 
 ```commandline
 python compute_metrics_reloaded.py 
