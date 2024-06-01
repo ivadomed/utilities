@@ -29,7 +29,18 @@ python -m pip install -e .
 
 ## Usage
 
-You can use the [compute_metrics_reloaded.py](../compute_metrics/compute_metrics_reloaded.py) script to compute metrics using the MetricsReloaded package.
+You can use the [compute_metrics_reloaded.py](../compute_metrics/compute_metrics_reloaded.py) wrapper script to compute metrics using the MetricsReloaded package.
+
+To download the script, run:
+
+```commandline
+git clone https://github.com/ivadomed/utilities.git
+cd utilities/compute_metrics
+conda activate metrics_reloaded
+python compute_metrics_reloaded.py -h
+```
+
+Examples:
 
 ```commandline
 python compute_metrics_reloaded.py 
