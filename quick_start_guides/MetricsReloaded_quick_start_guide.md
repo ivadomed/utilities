@@ -35,6 +35,7 @@ cd ~/code
 git clone https://github.com/ivadomed/utilities.git
 cd utilities/compute_metrics
 conda activate metrics_reloaded
+# verify that everything has been successfully installed
 python compute_metrics_reloaded.py -h
 ```
 
