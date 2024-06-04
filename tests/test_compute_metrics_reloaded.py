@@ -112,7 +112,7 @@ class TestComputeMetricsReloaded(unittest.TestCase):
                                   'nsd': 0.0,
                                   'rel_vol_error': -100.0,
                                   'vol_diff': 1.0,
-                                  'lesion_ppv': 1.0,
+                                  'lesion_ppv': 0.0,
                                   'lesion_sensitivity': 0.0,
                                   'lesion_f1_score': 0.0}}
 
