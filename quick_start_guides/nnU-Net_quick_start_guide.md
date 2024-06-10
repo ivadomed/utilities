@@ -14,7 +14,11 @@ Official installation instructions are available [here](https://github.com/MIC-D
 > **Note**
 > Run the installation commands on a GPU cluster, not on your laptop.
 
-You can use either `python -m venv` and `git clone`:
+---
+
+### `git clone`
+
+`python -m venv` and `git clone`:
 
 ```console
 cd ~
@@ -26,8 +30,9 @@ cd nnUNet
 pip install -e .
 ```
 
-Or `conda`:
+---
 
+### `conda`
 
 ```console
 # create conda env
@@ -77,6 +82,10 @@ pip install nnunetv2
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
+
+---
+
+### upgrades
 
 To upgrade nnunetv2 to the latest version, you can run the following command in your virtual env:
 
