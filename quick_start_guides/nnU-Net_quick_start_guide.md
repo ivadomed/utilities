@@ -84,6 +84,13 @@ To upgrade nnunetv2 to the latest version, you can run the following command in 
 pip install --upgrade nnunetv2
 ```
 
+To check the current version and to upgrade to a specific version, you can use: 
+
+```console
+pip freeze | grep nnunet
+pip install nnunetv2==2.4.1
+```
+
 ## Environment variables
 
 For details, see [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md#linux--macos).
