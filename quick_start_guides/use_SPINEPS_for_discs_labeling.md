@@ -36,10 +36,6 @@ Then, you need to install [SPINEPS](https://github.com/Hendrik-code/spineps) in 
 > **Note**
 > For this step you can also follow the official installation [here](https://github.com/Hendrik-code/spineps#installation-ubuntu)
 
-> **Note**
-> SPINEPS only works with GPU currently.
-
-
 1. Install the correct version of [pytorch](https://pytorch.org/get-started/locally/) in you environment.
 
 2. Confirm that your pytorch package is working! Try calling these command:
@@ -110,8 +106,10 @@ label_with_spineps(){
             else semantic=t2w_segmentor_2.0;
         fi
         
-        # Run SPINEPS on image
+        # Run SPINEPS on image with GPU
         spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_3.0 -dn derivatives
+        # Run SPINEPS on image with CPU
+        # spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_3.0 -dn derivatives -cpu
         
         # Run vertebral labeling with SPINEPS vertebrae prediction
         vert_path="$(echo ${tmpdir}/derivatives/*_seg-vert_msk.nii.gz)"
