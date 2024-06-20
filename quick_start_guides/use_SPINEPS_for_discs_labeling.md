@@ -107,9 +107,9 @@ label_with_spineps(){
         fi
         
         # Run SPINEPS on image with GPU
-        spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_3.0 -dn derivatives
+        spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_3.0 -dn derivatives -iic
         # Run SPINEPS on image with CPU
-        # spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_3.0 -dn derivatives -cpu
+        # spineps sample -i "$tmp_img_path" -model_semantic "$semantic" -model_instance inst_vertebra_3.0 -dn derivatives -cpu -iic
         
         # Run vertebral labeling with SPINEPS vertebrae prediction
         vert_path="$(echo ${tmpdir}/derivatives/*_seg-vert_msk.nii.gz)"
