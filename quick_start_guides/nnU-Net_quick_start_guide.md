@@ -200,8 +200,9 @@ nnUNetv2_predict -i ${nnUNet_raw}/DATASET_ID/imagesTs -o OUT_DIR -d DATASET_ID -
 
 Example of `OUT_DIR`: `${nnUNet_results}/<DATASET_NAME>/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/test`
 
-## Compute ANIMA metrics
+## Compute segmentation metrics
 
-For MS and SCI lesion segmentation tasks, you can compute ANIMA metrics using the [compute_anima_metrics.py](https://github.com/ivadomed/model_seg_sci/blob/main/testing/compute_anima_metrics.py) script.
+For MS and SCI lesion segmentation tasks, you can compute segmentation metrics, for example, using 
+[MetricsReloaded](https://github.com/ivadomed/MetricsReloaded/tree/main).
 
-For details see [ANIMA quick start guide](ANIMA_quick_start_guide.md).
+For details see [MetricsReloaded quick start guide](https://github.com/ivadomed/MetricsReloaded/blob/main/MetricsReloaded_quick_start_guide.md).
