@@ -34,8 +34,9 @@ def get_parser():
     parser.add_argument(
         '-i',
         required=True,
+        nargs='+',
         type=str,
-        help='Path to the txt log file produced by nnUNet.'
+        help='Path to the txt log file produced by nnUNet (or more log files separated by space).'
              'Example: training_log_2024_1_22_11_09_18.txt'
     )
     parser.add_argument(
@@ -97,6 +98,13 @@ def extract_epoch_and_dice(log_file_path):
 
 
 def create_figure(df, log_file_path, fold_number, args):
+    # if there are more than one log files, get the absolut path of first and connect it with '_' with the last one
+    # (but only the file name behind last /):
+    if len(log_file_path) > 1:
+        log_file_path = [os.path.abspath(log_file_path[0]).split('.')[0] + '_' + os.path.basename(log_file_path[-1]).split('.')[0]]
+        fname_fig = log_file_path[0]+'.png'
+    else:
+        fname_fig = log_file_path[0].replace('.txt', '.png')
     # Plotting using Plotly Express
     fig = px.line(df, x='epoch', y=df.columns[1:])
     # Update line width to 3
@@ -123,7 +131,6 @@ def create_figure(df, log_file_path, fold_number, args):
     fig.update_layout(margin=dict(l=80, r=50, b=50, t=100))
 
     # Save plot to a file
-    fname_fig = log_file_path.replace('.txt', '.png')
     fig.write_image(fname_fig, width=1920, height=1080)
     print(f'Saved plot to {fname_fig}')
 
@@ -145,29 +152,29 @@ def main():
     # Parse the command line arguments
     parser = get_parser()
     args = parser.parse_args()
+    combined_data = []
+    log_file_paths = []
 
-    # Get absolute path to the log file
-    log_file_path = os.path.abspath(os.path.expanduser(args.i))
+    for log_file_path in args.i:
+        log_file_path = os.path.abspath(os.path.expanduser(log_file_path))
+        log_file_paths.append(log_file_path)
+        data, fold_number = extract_epoch_and_dice(log_file_path)
+        df = pd.DataFrame(data)
+        df_pseudo_dice = pd.DataFrame(df['pseudo_dice'].to_list()[:-1],
+                                      columns=[f'validation_pseudo_dice_class_{i+1}'
+                                               for i in range(len(df['pseudo_dice'].iloc[0]))])
+        df = pd.concat([df, df_pseudo_dice], axis=1).drop('pseudo_dice', axis=1)
+        df['validation_pseudo_dice_mean'] = df.iloc[:, 1:].mean(axis=1)
+        combined_data.append(df)
 
-    data, fold_number = extract_epoch_and_dice(log_file_path)
+    # combine the combined data into one df
+    combined_data = pd.concat(combined_data, axis=0)
 
-    # Convert data to a Pandas DataFrame
-    df = pd.DataFrame(data)
-
-    # Create columns for each element in pseudo_dice
-    # [:-1] is used to remove the last row, which is empty
-    df_pseudo_dice = pd.DataFrame(df['pseudo_dice'].to_list()[:-1],
-                                  columns=[f'validation_pseudo_dice_class_{i+1}'
-                                           for i in range(len(df['pseudo_dice'].iloc[0]))])
-
-    # Concatenate the new DataFrame with the original DataFrame
-    df = pd.concat([df, df_pseudo_dice], axis=1).drop('pseudo_dice', axis=1)
-
-    # Compute mean of pseudo dice across all classes
-    df['validation_pseudo_dice_mean'] = df.iloc[:, 1:].mean(axis=1)
+    # if there is more same epochs in combined data (from different log files), keep only the last one
+    combined_data = combined_data.drop_duplicates(subset='epoch', keep='last')
 
     # Create figure
-    create_figure(df, log_file_path, fold_number, args)
+    create_figure(combined_data, log_file_paths, fold_number, args)
 
 
 if __name__ == "__main__":
