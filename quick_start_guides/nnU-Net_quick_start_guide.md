@@ -148,7 +148,22 @@ cross-validation, as well as finding postprocessing and the best ensemble using 
 - **imagesTs** (optional) contains the images that belong to the test cases. nnU-Net does not use them! This could just 
 be a convenient location for you to store these images. Remnant of the Medical Segmentation Decathlon folder structure.
 - **labelsTr** contains the images with the ground truth segmentation maps for the training cases. 
-- **dataset.json** contains metadata of the dataset.
+- **dataset.json** contains metadata of the dataset (more details [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md#datasetjson)). Example:
+
+```json
+{ 
+ "channel_names": {
+   "0": "T2w"
+ }, 
+ "labels": {
+   "background": 0,
+   "sc_seg": 1
+ }, 
+ "numTraining": 32, 
+ "file_ending": ".nii.gz"
+ "overwrite_image_reader_writer": "SimpleITKIO"
+ }
+```
   
 You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/dataset_conversion) to convert the data from BIDS to the nnU-Net format. 
 
