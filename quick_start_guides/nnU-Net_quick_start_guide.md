@@ -218,7 +218,6 @@ Example of `OUT_DIR`: `${nnUNet_results}/<DATASET_NAME>/nnUNetTrainer__nnUNetPla
 
 ## Compute segmentation metrics
 
-For MS and SCI lesion segmentation tasks, you can compute segmentation metrics, for example, using 
-[MetricsReloaded](https://github.com/ivadomed/MetricsReloaded/tree/main).
+You can compute segmentation metrics (Dice, ...) using [our MetricsReloaded fork](https://github.com/ivadomed/MetricsReloaded/tree/main).
 
-For details see [MetricsReloaded quick start guide](https://github.com/ivadomed/MetricsReloaded/blob/main/MetricsReloaded_quick_start_guide.md).
+For details, see [MetricsReloaded quick start guide](https://github.com/ivadomed/MetricsReloaded/blob/main/MetricsReloaded_quick_start_guide.md).
