@@ -124,22 +124,22 @@ export nnUNet_results="${HOME}/nnUNet_results"
 
 ## Data structure
 
-nnU-Net expects the following data structure:
+nnU-Net expects the following data structure (see [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md#dataset-folder-structure)) for details):
 
 ```
 nnUNet_raw/Dataset001_NAME1
 ├── dataset.json
 ├── imagesTr
-│   ├── BRATS_001_0000.nii.gz
-│   ├── BRATS_001_0001.nii.gz
+│   ├── sub-amu01_T2w_001_0000.nii.gz        # The last 4-digit (`0000`) are used to denote channels; if you have more channels (or MRI contrasts, e.g., T1w, T2w), use  `0000`, `0001`, `0002`, etc.
+│   ├── sub-amu02_T2w_002_0000.nii.gz
 │   ├── ...
 ├── imagesTs
-│   ├── BRATS_485_0000.nii.gz
-│   ├── BRATS_485_0001.nii.gz
+│   ├── sub-mgh01_T2w_089_0000.nii.gz
+│   ├── sub-mgh02_T2w_090_0000.nii.gz
 │   ├── ...
 └── labelsTr
-    ├── BRATS_001.nii.gz
-    ├── BRATS_002.nii.gz
+    ├── sub-amu01_T2w_001.nii.gz
+    ├── sub-amu02_T2w_002.nii.gz
     ├── ...
 ```
 
