@@ -176,6 +176,9 @@ You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/datase
 ## Train a model
 
 > **Note**
+> Since you will likely be running the training on one of our GPU servers, you will need to get your training data there. See [our intranet](https://intranet.neuro.polymtl.ca/computing-resources/neuropoly/gpus.html#data) for details. 
+
+> **Note**
 > Always run training inside the virtual terminal. You can use [`screen`](https://intranet.neuro.polymtl.ca/geek-tips/bash-shell/README.html#screen-for-background-processes) or `tmux`.
 
 1. Validate dataset integrity.
