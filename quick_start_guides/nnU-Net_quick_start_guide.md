@@ -179,7 +179,7 @@ You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/datase
 > Always run training inside the virtual terminal. You can use [`screen`](https://intranet.neuro.polymtl.ca/geek-tips/bash-shell/README.html#screen-for-background-processes) or `tmux`.
 
 1. Validate dataset integrity.
-> Note that if you only plan to use 2d, 3d_fullres or 3d_lowres data, you should use the flag `-c <DATA_TYPE>` to only generate the wanted data and save some space ! (default: -c 2d 3d_fullres 3d_lowres)
+> Note that if you only plan to use 2d, 3d_fullres or 3d_lowres data, you should use the flag `-c <DATA_TYPE>` to only generate the wanted data and save some space! (default: -c 2d 3d_fullres 3d_lowres)
 
 > Also 3d_cascade_fullres uses 3d_fullres data
 
