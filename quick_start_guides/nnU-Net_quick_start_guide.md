@@ -104,19 +104,24 @@ pip install nnunetv2==2.4.1
 
 For details, see [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md#linux--macos).
 
-nnU-Net requires the following three directories: `nnUNet_raw`, `nnUNet_preprocessed`, `nnUNet_results`. You can create them using:
+nnU-Net requires the following three directories: `nnUNet_raw`, `nnUNet_preprocessed`, `nnUNet_results`. You can create them using the commands below.
+
+> **Note**
+> Typically, these folders need to be created on the GPU server, not on the computer. You can connect to our GPU servers using `ssh`; see the intranet for details.
 
 ```console
-cd <PATH_WHERE_YOU_WANT_TO_CREATE_THE_FOLDERS>
+cd ~
+mkdir data/nnunetv2
+cd data/nnunetv2
 mkdir nnUNet_raw nnUNet_preprocessed nnUNet_results
 ```
 
 Then, include variables with paths to these folders in your `~/.bashrc` or `~/.zshrc` file:
 
 ```
-export nnUNet_raw="${HOME}/nnUNet_raw"
-export nnUNet_preprocessed="${HOME}/nnUNet_preprocessed"
-export nnUNet_results="${HOME}/nnUNet_results"
+export nnUNet_raw="${HOME}/data/nnunetv2/nnUNet_raw"
+export nnUNet_preprocessed="${HOME}/data/nnunetv2/nnUNet_preprocessed"
+export nnUNet_results="${HOME}/data/nnunetv2/nnUNet_results"
 ```
 
 > **Note**
