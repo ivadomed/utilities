@@ -20,6 +20,7 @@ import argparse
 
 import pandas as pd
 import plotly.express as px
+import numpy as np
 
 
 def get_parser():
@@ -119,6 +120,8 @@ def create_figure(df, log_file_path, fold_number, args):
     fig.update_yaxes(title_text='Validation Pseudo Dice')
     # Add title with fold number
     fig.update_layout(title=f'Fold {fold_number} -- Validation Pseudo Dice vs. Epoch')
+    # Set x axis limit
+    fig.update_xaxes(range=[0, df['epoch'].max()+1])
 
     # Increase all font sizes
     fig.update_layout(font=dict(size=28))
