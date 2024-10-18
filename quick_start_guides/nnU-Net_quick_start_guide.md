@@ -173,6 +173,11 @@ be a convenient location for you to store these testing images.
   
 You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/dataset_conversion) to convert the data from BIDS to the nnU-Net format. 
 
+> **Note**
+> It is a good idea to reorient all the images into a common orientation (e.g., `RPI`) before running training.
+> TODO: list some of our previous discussions
+> TODO: mention also resampling into common resolution? 
+
 ## Train a model
 
 > **Note**
