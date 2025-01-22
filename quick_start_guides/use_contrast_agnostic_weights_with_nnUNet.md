@@ -12,12 +12,16 @@ Download the pretrained weights from the [latest release](https://github.com/sct
 
 ### Step 2: Modify the plans file
 
-In your  nnUNetPlans.json, change the `strides` key to the following: 
+In your `$nnUNet_preprocessed/<dataset_name_or_id>/nnUNetPlans.json`, change the following keys for the `3d_fullres` configuration: 
+
+- `strides`: 
+
 ```
 [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [1, 2, 2]]
 ```
 
-Change `patch_size` for the `3D` model to: 
+- `patch_size`:
+
 ```
 [64, 192, 320]
 ```
