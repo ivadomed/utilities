@@ -34,6 +34,6 @@ nnUNetv2_train <dataset_name_or_id> <configuration> <fold> -pretrained_weights <
 
 > [!IMPORTANT]  
 > * Training/finetuning with contrast-agnostic weights only works when for 3D nnUNet models. 
-> * Ensure that all images are in the RPI orientation before running nnUNetv2_plan_and_preprocess. This is because the updated `patch_size` refers to patches in RPI orientation (if images are in different orientation, then the patch size might be sub-optimal).
+> * Ensure that all images are in the RPI orientation before running `nnUNetv2_plan_and_preprocess`. This is because the updated `patch_size` refers to patches in RPI orientation (if images are in different orientation, then the patch size might be sub-optimal).
 > * Ensure that `X` in `nnUNetTrainer_Xepochs` is set to a lower value than 1000. The idea is the finetuning does not require as many epochs as training from scratch because the contrast-agnostic model has already been trained on a lot of spinal cord images (so it might not require 1000 epochs to converge).
 
