@@ -2,16 +2,10 @@
 Read nnUNet training log file, extract epoch number and validation pseudo dice and plot them.
 This is useful for comparing multi-class training (because nnUNet plots only the mean dice across classes).
 
-Create venv and install dependencies
-    python3 -m venv venv
-    source ./venv/bin/activate
-    pip install pandas plotly kaleido
-
 Usage:
     python plot_nnunet_training_log.py -i <path_to_log_file>
-    python plot_nnunet_training_log.py -i <path_to_log_file> -interactive-figure
 
-Author: Jan Valosek
+Author: Jan Valosek, Katerina Krejci
 """
 
 import os
@@ -20,7 +14,8 @@ import argparse
 
 import pandas as pd
 import plotly.express as px
-import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def get_parser():
@@ -134,7 +129,7 @@ def create_figure(df, log_file_path, fold_number, args):
     fig.update_layout(margin=dict(l=80, r=50, b=50, t=100))
 
     # Save plot to a file
-    fig.write_image(fname_fig, width=1920, height=1080)
+    #fig.write_image(fname_fig, width=1920, height=1080)
     print(f'Saved plot to {fname_fig}')
 
     # Print the latest Dice for each class
@@ -149,6 +144,54 @@ def create_figure(df, log_file_path, fold_number, args):
     # - "validation pseudo-dice" is computed on randomly drawn patches (not full images) from the validation data at
     # the end of each epoch
 
+
+def create_figure_seaborn(df, log_file_path, fold_number, args):
+    # if there are more than one log files, get the absolute path of the first and connect it with '_' with the last one
+    # (but only the file name behind the last /):
+    if len(log_file_path) > 1:
+        log_file_path = [
+            os.path.abspath(log_file_path[0]).split('.')[0] + '_' + os.path.basename(log_file_path[-1]).split('.')[0]]
+        fname_fig = log_file_path[0] + '.svg'
+    else:
+        fname_fig = log_file_path[0].replace('.txt', '.svg')
+
+    # Set up the plot
+    plt.figure(figsize=(12, 7))
+
+    # set own color palette
+    color_palette = ['#1daafb', '#0441ff', '#500c83', '#c2005e', '#ed4b12', '#f9c600', '#5bba06', '#141414']
+    i = 0
+    # Plot each column except 'epoch' using Seaborn
+    for col in df.columns[2:-1]:
+        if col == 'pseudo_dice_mean':
+            col_name = "Mean value"
+            #sns.lineplot(data=df, x='epoch', y=col, label=col, linewidth=5, color=color_palette[-1], alpha=0.8)
+        else:
+            col_name = "Class " + col.split('_')[-1]
+            sns.lineplot(data=df, x='epoch', y=col, label=col_name, linewidth=2, color=color_palette[i], alpha=0.8)
+        i += 1
+    # Customize the plot
+    plt.ylim(-0.1, 1.1)
+    plt.xlim(0, df['epoch'].max() + 1)
+    plt.xlabel('Epoch', fontsize=20)
+    plt.ylabel('Validation Pseudo Dice', fontsize=20)
+    #plt.title(f'Validation Pseudo Dice vs. Epoch (MULTICON model, fold {fold_number})', fontsize=20)
+    plt.legend(title='Classes', title_fontsize=17, fontsize=17, loc='upper center',
+                       bbox_to_anchor=(1.12, 1.00), ncol=1, frameon=False)
+    plt.xticks(fontsize=17)
+    plt.yticks(fontsize=17)
+    # add grid to the plot
+    plt.grid(True, which='major', linestyle='--', linewidth=0.5)
+    plt.tight_layout()
+
+    # Save the figure
+    plt.savefig(fname_fig, dpi=300)
+    print(f'Saved plot to {fname_fig}')
+    plt.show()
+
+    # Print the latest Dice for each class
+    print(f'Latest Validation Pseudo Dice for each class: {df.iloc[-2, 1:-1].to_list()}')
+    print(f'Latest Mean Validation Pseudo Dice across all classes: {df.iloc[-2, -1]}')
 
 def main():
 
@@ -175,9 +218,11 @@ def main():
 
     # if there is more same epochs in combined data (from different log files), keep only the last one
     combined_data = combined_data.drop_duplicates(subset='epoch', keep='last')
+    combined_data = combined_data.reset_index(drop=True)
 
     # Create figure
     create_figure(combined_data, log_file_paths, fold_number, args)
+    create_figure_seaborn(combined_data, log_file_paths, fold_number, args)
 
 
 if __name__ == "__main__":
