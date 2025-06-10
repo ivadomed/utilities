@@ -171,6 +171,20 @@ def main():
     fname_prediction = os.path.join(tmpdir_nnunet, os.path.basename(add_suffix(fname_file_tmp, '_pred')))
     os.mkdir(tmpdir_nnunet)
 
+    # set device for nnUNet
+    if args.use_gpu:
+        if not torch.cuda.is_available():
+            print('CUDA-enabled GPU not found. Checking if Apple GPU (MPS) is available...')
+            if torch.backends.mps.is_available():
+                print('Using MPS for inference.')
+                device = torch.device('mps')
+            else:
+                print('No CUDA-enabled GPU or Apple GPU (MPS) found. Using CPU for inference.')
+                device = torch.device('cpu')
+        else:
+            print('Using CUDA-enabled GPU for inference.')
+            device = torch.device('cuda')
+
     # Run nnUNet prediction
     print('Starting inference...it may take a few minutes...')
     start = time.time()
@@ -179,8 +193,8 @@ def main():
         tile_step_size=args.tile_step_size,     # changing it from 0.5 to 0.9 makes inference faster
         use_gaussian=True,                      # applies gaussian noise and gaussian blur
         use_mirroring=False,                    # test time augmentation by mirroring on all axes
-        perform_everything_on_gpu=True if args.use_gpu else False,
-        device=torch.device('cuda') if args.use_gpu else torch.device('cpu'),
+        perform_everything_on_device=True if args.use_gpu else False,
+        device=device,  # use GPU if available, otherwise CPU
         verbose=False,
         verbose_preprocessing=False,
         allow_tqdm=True
