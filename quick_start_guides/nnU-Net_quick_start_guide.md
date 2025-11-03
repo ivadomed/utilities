@@ -268,9 +268,9 @@ Steps:
       return nnUNetTrainer_customTrainerName
    ```
 - Choose an appropriate base class to modify, and an appropriate name for your trainer, and update the names above.
-- Add your own modifications to the `__init__` method.
-- Put the `class` definition into this file according to [`nnunetv2`'s guidelines](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/blob/neuropoly-fork-patches/documentation/extending_nnunet.md):
-    > If you intend to modify the training procedure (loss, sampling, data augmentation, lr scheduler, etc) then you need to implement your own trainer class. Best practice is to create a class that inherits from nnUNetTrainer and implements the necessary changes. Head over to our [trainer classes folder](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/tree/neuropoly-fork-patches/nnunetv2/training/nnUNetTrainer) for inspiration! There will be similar trainers for what you intend to change and you can take them as a guide. nnUNetTrainer are structured similarly to PyTorch lightning trainers, this should also make things easier!
+    - [`nnunetv2`'s guidelines](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/blob/neuropoly-fork-patches/documentation/extending_nnunet.md):
+        > If you intend to modify the training procedure (loss, sampling, data augmentation, lr scheduler, etc) then you need to implement your own trainer class. Best practice is to create a class that inherits from nnUNetTrainer and implements the necessary changes. Head over to our [trainer classes folder](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/tree/neuropoly-fork-patches/nnunetv2/training/nnUNetTrainer) for inspiration! There will be similar trainers for what you intend to change and you can take them as a guide. nnUNetTrainer are structured similarly to PyTorch lightning trainers, this should also make things easier! 
+    - Example: [`ms-lesion-agnostic/nnunet/trainer_class.py`](https://github.com/ivadomed/ms-lesion-agnostic/blob/main/nnunet/trainer_class.py).
 - Copy the entire `trainer_class.py` file into the trainer classes folder.
     - If you have `git cloned` the `nnunetv2-neuropoly` repo, then this will be easy.
     - If you have installed via `pip` or `conda`, you will have to dig into the virtual environment to find the right folder. This will also depend on OS.
