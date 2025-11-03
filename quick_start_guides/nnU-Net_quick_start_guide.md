@@ -15,7 +15,8 @@ nnU-Net is a self-configuring framework for deep learning-based medical image se
 3. [Data structure](#3-data-structure)
 4. [Train a model](#4-train-a-model)
    1. [Validate dataset integrity](#i-validate-dataset-integrity)
-   2. [Run training](#ii-run-training)
+   2. [Using a custom trainer](#ii-using-a-custom-trainer)
+   3. [Run training](#iii-run-training)
 5. [Run prediction/inference](#5-run-predictioninference)
 6. [Compute segmentation metrics](#6-compute-segmentation-metrics)
 
@@ -139,7 +140,7 @@ pip freeze | grep nnunet-neuropoly
 pip install nnunetv2-neuropoly==2.6.2
 ```
 
-> ![WARNING]
+> [!WARNING]
 > The NeuroPoly fork currently supports version `2.6.2` and above.
 > 
 > If you need an older version, please open an issue on the SCT repo explaining your use-case, and SCT's devs will create a release for that older version.
@@ -246,7 +247,41 @@ nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity -c 2d 3d_f
 
 Replace `DATASET_ID` with a number higher than 500, for example, `-d 501`.
 
-### ii. Run training
+### ii. Using a custom trainer
+
+Because we are using the NeuroPoly fork of nnUNet, you can create and specify a custom trainer class if the default trainers aren't sufficient for your needs. 
+
+Steps:
+
+- Create a new Python file called `trainer_class.py` using the following template:
+   ```python
+   import torch
+   
+   class nnUNetTrainer_customTrainerName(nnUNetTrainer_pickAnExistingTrainerToModify):
+       def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict,
+                    device: torch.device = torch.device('cuda')):
+           super().__init__(plans, configuration, fold, dataset_json, device)
+           # Add your own modifications here
+   
+   # using a standardized function name so that SCT can import the class
+   def get_trainer_class():
+      return nnUNetTrainer_customTrainerName
+   ```
+- Choose an appropriate base class to modify, and an appropriate name for your trainer, and update the names above.
+- Add your own modifications to the `__init__` method.
+- Put the `class` definition into this file according to [`nnunetv2`'s guidelines](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/blob/neuropoly-fork-patches/documentation/extending_nnunet.md):
+    > If you intend to modify the training procedure (loss, sampling, data augmentation, lr scheduler, etc) then you need to implement your own trainer class. Best practice is to create a class that inherits from nnUNetTrainer and implements the necessary changes. Head over to our [trainer classes folder](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/tree/neuropoly-fork-patches/nnunetv2/training/nnUNetTrainer) for inspiration! There will be similar trainers for what you intend to change and you can take them as a guide. nnUNetTrainer are structured similarly to PyTorch lightning trainers, this should also make things easier!
+- Copy the entire `trainer_class.py` file into the trainer classes folder.
+    - If you have `git cloned` the `nnunetv2-neuropoly` repo, then this will be easy.
+    - If you have installed via `pip` or `conda`, you will have to dig into the virtual environment to find the right folder. This will also depend on OS.
+- You can now specify this trainer class in your [`plans.json`](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/blob/neuropoly-fork-patches/documentation/explanation_plans_files.md) file, under the "`network_arch_class_name`" key.
+
+> [!IMPORTANT]
+> If you use a custom trainer, and you wish to package your model for use with SCT, you will need to include this `trainer_class.py` file when you distribute your model.
+>
+> So, we highly recommend that you also commit this `trainer_class.py` file to your repo so that it is easy to access and review.
+
+### iii. Run training
 
 ``` 
 CUDA_VISIBLE_DEVICES=X nnUNetv2_train DATASET_ID CONFIG FOLD
