@@ -4,8 +4,26 @@ This file provides a quick-start guide for nnU-Net v2.
 
 nnU-Net is a self-configuring framework for deep learning-based medical image segmentation; see [nnUNet GitHub page](https://github.com/MIC-DKFZ/nnUNet) and [publication](https://www.nature.com/articles/s41592-020-01008-z).
 
+## Table of Contents
+
+0. [Using Neuropoly's fork of nnU-Net](#0-using-neuropolys-fork-of-nnu-net)
+1. [Installation](#1-installation)
+   1. [`git clone` + Python virtual environment](#i-git-clone)
+   2. [`conda` environment](#ii-conda)
+   3. [Upgrading `nnunetv2`](#iii-upgrading-nnunetv2)
+2. [Setting required environment variables](#2-environment-variables)
+3. [Data structure](#3-data-structure)
+4. [Train a model](#4-train-a-model)
+   1. [Validate dataset integrity](#i-validate-dataset-integrity)
+   2. [Run training](#ii-run-training)
+5. [Run prediction/inference](#5-run-predictioninference)
+6. [Compute segmentation metrics](#6-compute-segmentation-metrics)
+
+----
+
+## 0. Using Neuropoly's fork of nnU-Net
+
 > [!IMPORTANT]
-> ## Using Neuropoly's fork of nnU-Net
 > 
 > In October 2025, NeuroPoly "forked" the nnU-Netv2 repo (`nnunetv2` -> [`nnunetv2-neurpoly`](https://github.com/spinalcordtoolbox/nnUNet-neuropoly)). This fork provides us with some extra freedom to tweak the nnU-Net package to meet our needs.
 > 
@@ -20,7 +38,9 @@ nnU-Net is a self-configuring framework for deep learning-based medical image se
 >
 > Outside of these instructions, you can generally replace "`pip install nnunetv2`" with "`pip install nnunetv2-neuropoly`" and it will work exactly the same as `nnunetv2`.
 
-## Installation
+----
+
+## 1. Installation
 
 Official installation instructions are available [here](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/blob/master/documentation/installation_instructions.md).
 
@@ -32,7 +52,7 @@ Official installation instructions are available [here](https://github.com/spina
 
 ---
 
-### `git clone`
+### i. `git clone`
 
 `python -m venv` and `git clone`:
 
@@ -51,7 +71,7 @@ pip install -e .
 
 ---
 
-### `conda`
+### ii. `conda`
 
 ```bash
 # create conda env
@@ -104,12 +124,12 @@ pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 
 ---
 
-### upgrades
+### iii. Upgrading nnunetv2
 
 To upgrade nnunetv2 to the latest version, you can run the following command in your virtual env:
 
 ```bash
-pip install --upgrade nnunetv2
+pip install --upgrade nnunetv2-neuropoly
 ```
 
 To check the current version and to upgrade to a specific version, you can use: 
@@ -124,7 +144,9 @@ pip install nnunetv2-neuropoly==2.6.2
 > 
 > If you need an older version, please open an issue on the SCT repo explaining your use-case, and SCT's devs will create a release for that older version.
 
-## Environment variables
+----
+
+## 2. Environment variables
 
 For details, see [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md#linux--macos).
 
@@ -151,7 +173,7 @@ export nnUNet_results="${HOME}/data/nnunetv2/nnUNet_results"
 > **Note**
 > Modify the paths according to where you created the folders.
 
-## Data structure
+## 3. Data structure
 
 nnU-Net expects the following data structure (see [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md#dataset-folder-structure)) for details):
 
@@ -202,7 +224,9 @@ You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/datase
 > TODO: list some of our previous discussions
 > TODO: mention also resampling into common resolution? 
 
-## Train a model
+----
+
+## 4. Train a model
 
 > **Note**
 > Since you will likely be running the training on one of our GPU servers, you will need to get your training data there. See [our intranet](https://intranet.neuro.polymtl.ca/computing-resources/neuropoly/gpus.html#data) for details. 
@@ -210,7 +234,8 @@ You can use [our scripts](https://github.com/ivadomed/utilities/tree/main/datase
 > **Note**
 > Always run training inside the virtual terminal. You can use [`screen`](https://intranet.neuro.polymtl.ca/geek-tips/bash-shell/README.html#screen-for-background-processes) or `tmux`.
 
-1. Validate dataset integrity.
+### i. Validate dataset integrity.
+
 > Note that if you only plan to use 2d, 3d_fullres or 3d_lowres data, you should use the flag `-c <DATA_TYPE>` to only generate the wanted data and save some space! (default: -c 2d 3d_fullres 3d_lowres)
 
 > Also 3d_cascade_fullres uses 3d_fullres data
@@ -221,7 +246,7 @@ nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity -c 2d 3d_f
 
 Replace `DATASET_ID` with a number higher than 500, for example, `-d 501`.
 
-2. Run training
+### ii. Run training
 
 ``` 
 CUDA_VISIBLE_DEVICES=X nnUNetv2_train DATASET_ID CONFIG FOLD
@@ -242,8 +267,9 @@ Replace `FOLD` with 0 if you want to run only a single fold; otherwise, 5 folds 
 > Figure tracking the training progress is available `nnUNet_results/DATASET_ID/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_X/progress.png`
 You can copy it locally using `scp PATH:server_file PATH:local_file`
 
+----
 
-## Run prediction/inference
+## 5. Run prediction/inference
 
 Only possible if 50+ epochs.
 
@@ -253,7 +279,9 @@ nnUNetv2_predict -i ${nnUNet_raw}/DATASET_ID/imagesTs -o OUT_DIR -d DATASET_ID -
 
 Example of `OUT_DIR`: `${nnUNet_results}/<DATASET_NAME>/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/test`
 
-## Compute segmentation metrics
+----
+
+## 6. Compute segmentation metrics
 
 You can compute segmentation metrics (Dice, ...) using [our MetricsReloaded fork](https://github.com/ivadomed/MetricsReloaded/tree/main).
 
