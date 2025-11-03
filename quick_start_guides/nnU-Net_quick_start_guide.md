@@ -4,9 +4,25 @@ This file provides a quick-start guide for nnU-Net v2.
 
 nnU-Net is a self-configuring framework for deep learning-based medical image segmentation; see [nnUNet GitHub page](https://github.com/MIC-DKFZ/nnUNet) and [publication](https://www.nature.com/articles/s41592-020-01008-z).
 
+> [!IMPORTANT]
+> ## Using Neuropoly's fork of nnU-Net
+> 
+> In October 2025, NeuroPoly "forked" the nnU-Netv2 repo (`nnunetv2` -> [`nnunetv2-neurpoly`](https://github.com/spinalcordtoolbox/nnUNet-neuropoly)). This fork provides us with some extra freedom to tweak the nnU-Net package to meet our needs.
+> 
+> Some of the benefits of this fork include:
+> 
+> - Tested compatibility with SCT.
+> - Compatibility with older versions of PyTorch.
+> - Improved support for custom trainer classes.
+> - Improved support for multi-fold inference.
+> 
+> All of the links and instructions in this document will point to the fork.
+>
+> Outside of these instructions, you can generally replace "`pip install nnunetv2`" with "`pip install nnunetv2-neuropoly`" and it will work exactly the same as `nnunetv2`.
+
 ## Installation
 
-Official installation instructions are available [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/installation_instructions.md#installation-instructions).
+Official installation instructions are available [here](https://github.com/spinalcordtoolbox/nnUNet-neuropoly/blob/master/documentation/installation_instructions.md).
 
 > **Note**
 > Always install nnU-Net inside a virtual environment.
@@ -20,12 +36,15 @@ Official installation instructions are available [here](https://github.com/MIC-D
 
 `python -m venv` and `git clone`:
 
-```console
+```bash
+# Create and activate a Python virtual environment
 cd ~
 mkdir nnUNet_env
 python -m venv nnUNet_env/
 source nnUNet_env/bin/activate
-git clone https://github.com/MIC-DKFZ/nnUNet.git
+# Clone the repository
+git clone -b neuropoly-fork-patches git@github.com:spinalcordtoolbox/nnUNet-neuropoly.git
+# Open the repostiroy folder and install
 cd nnUNet
 pip install -e .
 ```
@@ -34,29 +53,29 @@ pip install -e .
 
 ### `conda`
 
-```console
+```bash
 # create conda env
-conda create --name nnunet python=3.9
+conda create --name nnunet python=3.10
 conda activate nnunet
 ```
 
 **GPU `conda install`:**
 
-```console
+```bash
 # install pytorch using conda - https://pytorch.org/get-started/locally/
 conda install pytorch torchvision pytorch-cuda=12.1 -c pytorch -c nvidia
-# install nnunet
-pip install nnunetv2
+# install nnunet (neuropoly fork)
+pip install nnunetv2-neuropoly
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
 
 **GPU `pip3 install`:**
 
-```console
+```bash
 # install pytorch using pip
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-pip install nnunetv2
+pip install nnunetv2-neuropoly
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
@@ -74,11 +93,11 @@ This should now return `True`.
 
 **CPU (for inference only):**
 
-```console
+```bash
 # install pytorch - https://pytorch.org/get-started/locally/
 conda install pytorch torchvision torchaudio cpuonly -c pytorch
-# install nnunet
-pip install nnunetv2
+# install nnunet (neuropoly fork)
+pip install nnunetv2-neuropoly
 # Install hiddenlayer. hiddenlayer enables nnU-net to generate plots of the network topologies it generates
 pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 ```
@@ -89,16 +108,21 @@ pip install --upgrade git+https://github.com/FabianIsensee/hiddenlayer.git
 
 To upgrade nnunetv2 to the latest version, you can run the following command in your virtual env:
 
-```console
+```bash
 pip install --upgrade nnunetv2
 ```
 
 To check the current version and to upgrade to a specific version, you can use: 
 
-```console
-pip freeze | grep nnunet
-pip install nnunetv2==2.4.1
+```bash
+pip freeze | grep nnunet-neuropoly
+pip install nnunetv2-neuropoly==2.6.2
 ```
+
+> ![WARNING]
+> The NeuroPoly fork currently supports version `2.6.2` and above.
+> 
+> If you need an older version, please open an issue on the SCT repo explaining your use-case, and SCT's devs will create a release for that older version.
 
 ## Environment variables
 
@@ -109,7 +133,7 @@ nnU-Net requires the following three directories: `nnUNet_raw`, `nnUNet_preproce
 > **Note**
 > Typically, these folders need to be created on the GPU server, not on the computer. You can connect to our GPU servers using `ssh`; see the intranet for details.
 
-```console
+```bash
 cd ~
 mkdir data/nnunetv2
 cd data/nnunetv2
